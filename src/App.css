@@ -1,0 +1,54 @@
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+#root {
+  min-height: 100%;
+}
+.grid-container {
+  width: 100vw;
+  height: 100vh;
+  overflow: visible; /* ✅ */
+}
+
+.image-wrapper {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.grid-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(100%);
+  transition: filter 0.3s ease;
+  display: block;
+}
+
+.image-wrapper:hover .grid-image {
+  filter: grayscale(0%);
+}
+
+/* Centro sin hover activo, pero con filtro */
+.no-hover {
+  pointer-events: none;
+}
+
+.logo-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  height: 460px;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+}
+
+.logo-overlay.no-filter {
+  filter: none;
+}
