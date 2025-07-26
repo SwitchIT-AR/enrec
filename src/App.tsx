@@ -2,6 +2,7 @@ import "./App.css";
 import "@mantine/core/styles.css";
 import { Grid, Modal } from "@mantine/core";
 import { useState } from "react";
+
 import francisca from "./assets/francisca.jpg";
 import francisca1 from "./assets/francisca1.jpg";
 import jjulian from "./assets/jjjulian.jpg";
@@ -42,10 +43,8 @@ function App() {
         onClose={() => setOpened(false)}
         centered
         size="auto"
-        withCloseButton={true}
-        withinPortal={
-          false
-        } /* 👈 Fuerza que se renderice dentro del DOM actual */
+        withinPortal={false}
+        withCloseButton
         overlayProps={{
           backgroundOpacity: 0.85,
           blur: 4,
@@ -86,9 +85,9 @@ function App() {
         </div>
       </Modal>
 
-      <Grid gutter={0} columns={12}>
+      <Grid gutter={0}>
         {images.map((item, idx) => (
-          <Grid.Col span={4} key={idx}>
+          <Grid.Col span={{ base: 6, sm: 6, md: 4 }} key={idx}>
             <div
               onClick={() => handleClick(item)}
               className="image-wrapper"

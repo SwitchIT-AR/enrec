@@ -8,21 +8,24 @@ body {
 #root {
   min-height: 100%;
 }
+
 .grid-container {
   width: 100vw;
-  height: 100vh;
-  overflow: visible; /* ✅ */
+  min-height: 100vh;
+  overflow: visible;
 }
 
 .image-wrapper {
-  display: block;
   position: relative;
   width: 100%;
-  height: 100%;
+  aspect-ratio: 16 / 9;
   overflow: hidden;
 }
 
 .grid-image {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -44,11 +47,22 @@ body {
   position: absolute;
   top: 50%;
   left: 50%;
-  height: 460px;
+  height: 100%;
   transform: translate(-50%, -50%);
   z-index: 2;
 }
 
 .logo-overlay.no-filter {
   filter: none;
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  z-index: 1;
 }
