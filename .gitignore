@@ -1,0 +1,15 @@
+node_modules/
+dist/
+backend/dist/
+backend/node_modules/
+
+# Credenciales — NUNCA subir al repo
+backend/*.json
+!backend/package.json
+!backend/tsconfig*.json
+backend/.env
+.env
+.env.local
+
+# macOS
+.DS_Store

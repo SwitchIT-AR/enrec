@@ -1,0 +1,506 @@
+/* ── Video modal ── */
+.videoWrapper {
+  position: relative;
+  width: 90vw;
+  max-width: 1280px;
+  aspect-ratio: 16 / 9;
+}
+
+.videoFrame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* ── Hero carousel ── */
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding-top: var(--header-h);
+}
+
+/* Fondos apilados que hacen crossfade */
+.carouselBg {
+  position: absolute;
+  inset: 0;
+  background-color: #0a0a0a;
+  opacity: 0;
+  transition: opacity 1s ease;
+  will-change: opacity;
+  overflow: hidden;
+}
+
+.carouselVideoFrame {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  /* Cover the full hero regardless of aspect ratio */
+  width: 100vw;
+  height: 56.25vw;   /* 16/9 */
+  min-height: 100vh;
+  min-width: 177.78vh; /* 9/16 inverse */
+  border: none;
+  pointer-events: none;
+}
+
+.carouselBgActive {
+  opacity: 1;
+}
+
+/* Degradado encima del fondo */
+.carouselOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.45) 0%,
+    rgba(0, 0, 0, 0.65) 50%,
+    rgba(0, 0, 0, 0.9) 100%
+  );
+}
+
+/* Contenido sobre el carousel */
+.heroContent {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 60px 24px 40px;
+  text-align: center;
+}
+
+.heroLogo {
+  height: 350px;
+  width: auto;
+  filter: drop-shadow(0 2px 16px rgba(0,0,0,0.6));
+}
+
+.heroTagline {
+  margin: 0;
+  font-size: clamp(18px, 3.5vw, 30px);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Info sesión activa */
+.sessionInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.sessionLabel {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.sessionArtist {
+  font-size: clamp(22px, 5vw, 40px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #fff;
+  transition: opacity 0.4s ease;
+}
+
+/* Botón play */
+.playBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 28px;
+  background: rgba(255, 51, 51, 0.9);
+  border: none;
+  border-radius: 50px;
+  color: #fff;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+  backdrop-filter: blur(4px);
+}
+
+.playBtn:hover {
+  background: var(--accent);
+  transform: scale(1.04);
+}
+
+/* Dots */
+.dots {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.3s, transform 0.3s;
+}
+
+.dotActive {
+  background: #fff;
+  transform: scale(1.3);
+}
+
+/* ── Hero CTAs ── */
+.heroCtas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  padding: 0 24px;
+}
+
+.ctaPrimary {
+  padding: 13px 26px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 15px;
+  transition: background 0.2s;
+}
+
+.ctaPrimary:hover {
+  background: #e62a2a;
+}
+
+.ctaSecondary {
+  padding: 13px 26px;
+  border: 1px solid rgba(240, 240, 240, 0.2);
+  color: rgba(240, 240, 240, 0.7);
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 15px;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+}
+
+.ctaSecondary:hover {
+  border-color: rgba(240, 240, 240, 0.45);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* ── Sessions grid ── */
+.sessions {
+  padding: 80px 0 0;
+}
+
+.sectionHeader {
+  padding: 0 24px 40px;
+  text-align: center;
+}
+
+.sectionTitle {
+  margin: 0 0 8px;
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.sectionSub {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.cell {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  cursor: default;
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.cellImg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(100%);
+  transition: filter 0.35s ease, transform 0.35s ease;
+  display: block;
+}
+
+.clickable:hover .cellImg {
+  filter: grayscale(0%);
+  transform: scale(1.03);
+}
+
+.cellOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+  z-index: 1;
+  transition: background 0.35s ease;
+}
+
+.clickable:hover .cellOverlay {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.centerLogo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  height: 65%;
+  width: auto;
+  filter: brightness(0) invert(1);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.playIcon {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  z-index: 2;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 51, 51, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.clickable:hover .playIcon {
+  opacity: 1;
+}
+
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ── Sobre EN .REC ── */
+.about {
+  padding: 96px 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.aboutInner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 72px;
+  align-items: start;
+}
+
+.aboutEyebrow {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+
+.aboutTitle {
+  margin: 0 0 24px;
+  font-size: clamp(26px, 3.2vw, 38px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.aboutBody {
+  margin: 0 0 16px;
+  font-size: 15px;
+  color: rgba(240, 240, 240, 0.68);
+  line-height: 1.75;
+}
+
+.aboutProduced {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.pillars {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding-top: 8px;
+}
+
+.pillar {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.pillarDot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-top: 5px;
+}
+
+.pillarTitle {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.pillarDesc {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+@media (max-width: 768px) {
+  .aboutInner {
+    grid-template-columns: 1fr;
+    gap: 44px;
+  }
+}
+
+/* ── Radar CTA banner ── */
+.radarCta {
+  padding: 48px 24px;
+  margin-top: 64px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.radarCtaInner {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.radarDot {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-dim);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 4px var(--accent-dim); }
+  50%       { box-shadow: 0 0 0 10px rgba(255, 51, 51, 0); }
+}
+
+.radarCtaTitle {
+  margin: 0 0 6px;
+  font-size: clamp(18px, 3vw, 24px);
+  font-weight: 700;
+}
+
+.radarCtaText {
+  margin: 0;
+  font-size: 14px;
+  color: rgba(240, 240, 240, 0.6);
+  line-height: 1.6;
+}
+
+.radarCtaBtn {
+  margin-left: auto;
+  padding: 12px 24px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.radarCtaBtn:hover {
+  background: #e62a2a;
+}
+
+@media (max-width: 600px) {
+  .radarCtaBtn {
+    margin-left: 0;
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* ── Footer ── */
+.footer {
+  padding: 48px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.footerLogo {
+  height: 36px;
+  width: auto;
+  opacity: 0.5;
+}
+
+.footerNav {
+  display: flex;
+  gap: 24px;
+}
+
+.footerLink {
+  font-size: 13px;
+  color: var(--muted);
+  transition: color 0.2s;
+}
+
+.footerLink:hover {
+  color: var(--text);
+}
+
+.footerCopy {
+  margin: 0;
+  font-size: 12px;
+  color: rgba(102, 102, 102, 0.5);
+}
