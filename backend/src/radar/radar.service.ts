@@ -39,6 +39,10 @@ export class RadarService {
     return this.repo.find({ order: { created_at: 'DESC' } });
   }
 
+  async deletePostulacion(id: number): Promise<void> {
+    await this.repo.delete(id);
+  }
+
   // ── Pregunta Sets ─────────────────────────────────────────────────────────
 
   private toPublicSet(s: PreguntaSet): Record<string, unknown> {

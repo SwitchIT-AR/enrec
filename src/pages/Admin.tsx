@@ -177,6 +177,16 @@ export default function Admin() {
     a.click(); URL.revokeObjectURL(url);
   };
 
+  // ── Postulacion delete ────────────────────────────────────────────────────
+  const deletePostulacion = async (id: number) => {
+    if (!confirm(`¿Eliminar la postulación #${id}? Esta acción no se puede deshacer.`)) return;
+    await fetch(`/api/radar/admin/postulaciones/${id}`, {
+      method: "DELETE", headers: authHeaders(token),
+    });
+    setData((prev) => prev?.filter((p) => p.id !== id) ?? null);
+    if (expanded === id) setExpanded(null);
+  };
+
   // ── Set CRUD ──────────────────────────────────────────────────────────────
   const saveSet = async () => {
     if (!editingSet) return;
@@ -348,7 +358,14 @@ export default function Admin() {
                             {noneOk && <span className={styles.answerBadgeNone}>✗ Incorrectas</span>}
                           </td>
                           <td className={styles.dateCell}>{formatDate(p.created_at)}</td>
-                          <td className={styles.chevron}>{expanded === p.id ? "▲" : "▼"}</td>
+                          <td className={styles.chevron}>
+                            <span>{expanded === p.id ? "▲" : "▼"}</span>
+                            <button
+                              className={styles.deleteRowBtn}
+                              onClick={(e) => { e.stopPropagation(); deletePostulacion(p.id); }}
+                              title="Eliminar postulación"
+                            >✕</button>
+                          </td>
                         </tr>
 
                         {expanded === p.id && (() => {
@@ -373,7 +390,9 @@ export default function Admin() {
                                     <div className={styles.detailBlock}>
                                       <span className={styles.detailLabel}>Canal de YouTube declarado</span>
                                       <p className={styles.detailText}>
-                                        {p.yt_channel ? <a href={`https://youtube.com/${p.yt_channel}`} target="_blank" rel="noopener noreferrer" className={styles.link}>{p.yt_channel}</a> : "—"}
+                                        {p.yt_channel
+                          ? <a href={p.yt_channel.startsWith("http") ? p.yt_channel : `https://youtube.com/${p.yt_channel}`} target="_blank" rel="noopener noreferrer" className={styles.link}>{p.yt_channel}</a>
+                          : "—"}
                                         {" "}
                                         {p.yt_subscribed_verified
                                           ? <span className={styles.verifiedBadge}>✓ Suscripción verificada</span>

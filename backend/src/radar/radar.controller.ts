@@ -64,6 +64,16 @@ export class RadarController {
     return this.service.findAll();
   }
 
+  @Delete('admin/postulaciones/:id')
+  @HttpCode(204)
+  async deletePostulacion(
+    @Headers('authorization') auth: string,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    this.checkAdmin(auth);
+    await this.service.deletePostulacion(id);
+  }
+
   // ── Admin — pregunta sets ─────────────────────────────────────────────────
 
   @Get('admin/pregunta-sets')
