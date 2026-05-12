@@ -4,6 +4,11 @@ import styles from "./Admin.module.css";
 const CORRECT_R1 = "3"; // fallback para postulaciones sin set
 const CORRECT_R2 = "6";
 
+const DEFAULT_P1_LABEL = "Sesión #7 — Francisca y Los Exploradores";
+const DEFAULT_P1_Q = "¿Cuántas veces aparecen los camarógrafos en cámara?";
+const DEFAULT_P2_LABEL = "Sesión #8 — Mariana Michi";
+const DEFAULT_P2_Q = "¿Cuántos riffs y/o solos toca el guitarrista a lo largo de la sesión?";
+
 const DIAS_LABELS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 
 function checkAnswer(answer: string, correct: string) {
@@ -421,11 +426,29 @@ export default function Admin() {
             </button>
           </div>
 
-          {/* Lista de sets existentes */}
-          {sets.length === 0 && !editingSet && (
-            <p className={styles.empty}>No hay sets configurados. Creá el primero.</p>
-          )}
+          {/* Preguntas por defecto (fallback siempre visible) */}
+          <div className={`${styles.setCard} ${styles.setCardDefault}`}>
+            <div className={styles.setCardHeader}>
+              <div className={styles.setCardMeta}>
+                <span className={styles.setCardName}>Preguntas por defecto</span>
+                <span className={styles.setDefaultBadge}>Fallback — activo cuando no hay set para el día</span>
+              </div>
+            </div>
+            <div className={styles.setCardQuestions}>
+              <div className={styles.setCardQ}>
+                <span className={styles.setCardQLabel}>P1</span>
+                <span className={styles.setCardQText}>{DEFAULT_P1_LABEL} — {DEFAULT_P1_Q}</span>
+                <span className={styles.setCardQCorrect}>→ {CORRECT_R1}</span>
+              </div>
+              <div className={styles.setCardQ}>
+                <span className={styles.setCardQLabel}>P2</span>
+                <span className={styles.setCardQText}>{DEFAULT_P2_LABEL} — {DEFAULT_P2_Q}</span>
+                <span className={styles.setCardQCorrect}>→ {CORRECT_R2}</span>
+              </div>
+            </div>
+          </div>
 
+          {/* Lista de sets configurados */}
           <div className={styles.setsList}>
             {sets.map((s) => (
               <div key={s.id} className={`${styles.setCard} ${!s.activo ? styles.setCardInactive : ""}`}>

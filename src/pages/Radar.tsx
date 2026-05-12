@@ -315,14 +315,26 @@ export default function Radar() {
         {/* Header */}
         <div className={styles.formHeader}>
           <h1 className={styles.title}>
-            Radar{" "}
+            <span className={styles.titleTop}>
+              Radar
+              <svg
+                className={styles.radarIcon}
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
+                <path d="M15.51 15.56a5 5 0 1 0 -3.51 1.44" />
+                <path d="M18.832 17.86a9 9 0 1 0 -6.832 3.14" />
+                <path d="M12 12v9" />
+              </svg>
+            </span>
             <img src={logo} alt="EN .REC" className={styles.titleLogo} />
-            <svg className={styles.radarIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" />
-              <circle cx="12" cy="12" r="6" stroke="currentColor" strokeWidth="1.5" />
-              <circle cx="12" cy="12" r="2" stroke="currentColor" strokeWidth="1.5" />
-              <line x1="12" y1="12" x2="20.5" y2="5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
           </h1>
           <p className={styles.subtitle}>
             Estamos buscando un nuevo proyecto musical para grabar una sesión en vivo junto a EN
