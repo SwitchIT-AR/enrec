@@ -1,6 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import * as fs from 'fs';
 import * as crypto from 'crypto';
+import { YoutubeBaseline } from './youtube-baseline.entity';
 
 const SESSIONS = [
   { nombre: 'Manu Martínez', videoId: '3u0bbataius' },
@@ -33,6 +34,8 @@ export class RadarService {
     private readonly repo: Repository<Postulacion>,
     @InjectRepository(PreguntaSet)
     private readonly setRepo: Repository<PreguntaSet>,
+    @InjectRepository(YoutubeBaseline)
+    private readonly baselineRepo: Repository<YoutubeBaseline>,
     private readonly config: ConfigService,
   ) {}
 
@@ -69,21 +72,73 @@ export class RadarService {
         `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${ids}&key=${apiKey}`,
       );
       const data = await res.json();
+
+      // Load latest baseline snapshot for each video (if any)
+      const baselines = await this.baselineRepo
+        .createQueryBuilder('b')
+        .distinctOn(['b.video_id'])
+        .orderBy('b.video_id')
+        .addOrderBy('b.captured_at', 'DESC')
+        .getMany();
+      const baselineMap = new Map(baselines.map((b) => [b.video_id, b]));
+
       return SESSIONS.map((session) => {
         const item = data.items?.find((i: { id: string }) => i.id === session.videoId);
+        const viewCount = parseInt(item?.statistics?.viewCount ?? '0', 10);
+        const likeCount = parseInt(item?.statistics?.likeCount ?? '0', 10);
+        const commentCount = parseInt(item?.statistics?.commentCount ?? '0', 10);
+        const baseline = baselineMap.get(session.videoId);
         return {
           nombre: session.nombre,
           videoId: session.videoId,
-          viewCount: parseInt(item?.statistics?.viewCount ?? '0', 10),
-          likeCount: parseInt(item?.statistics?.likeCount ?? '0', 10),
-          commentCount: parseInt(item?.statistics?.commentCount ?? '0', 10),
+          viewCount,
+          likeCount,
+          commentCount,
           publishedAt: item?.snippet?.publishedAt ?? null,
           thumbnail: item?.snippet?.thumbnails?.medium?.url ?? null,
+          baselineViewCount: baseline ? Number(baseline.view_count) : null,
+          baselineLikeCount: baseline ? Number(baseline.like_count) : null,
+          baselineCapturedAt: baseline ? baseline.captured_at : null,
+          deltaViews: baseline ? viewCount - Number(baseline.view_count) : null,
+          deltaLikes: baseline ? likeCount - Number(baseline.like_count) : null,
         };
       });
     } catch {
       return SESSIONS.map((s) => ({ ...s, error: 'fetch_error' }));
     }
+  }
+
+  async captureBaseline(): Promise<{ captured: number; capturedAt: Date }> {
+    const apiKey = this.config.get<string>('YOUTUBE_API_KEY');
+    if (!apiKey) throw new Error('YOUTUBE_API_KEY not configured');
+
+    const ids = SESSIONS.map((s) => s.videoId).join(',');
+    const res = await fetch(
+      `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${ids}&key=${apiKey}`,
+    );
+    const data = await res.json();
+
+    const entities = SESSIONS.map((session) => {
+      const item = data.items?.find((i: { id: string }) => i.id === session.videoId);
+      return this.baselineRepo.create({
+        video_id: session.videoId,
+        view_count: parseInt(item?.statistics?.viewCount ?? '0', 10),
+        like_count: parseInt(item?.statistics?.likeCount ?? '0', 10),
+        comment_count: parseInt(item?.statistics?.commentCount ?? '0', 10),
+        label: session.nombre,
+      });
+    });
+
+    await this.baselineRepo.save(entities);
+    return { captured: entities.length, capturedAt: new Date() };
+  }
+
+  async getLatestBaseline(): Promise<{ capturedAt: Date | null; label: string | null }> {
+    const latest = await this.baselineRepo.findOne({
+      where: {},
+      order: { captured_at: 'DESC' },
+    });
+    return { capturedAt: latest?.captured_at ?? null, label: latest ? 'Campaña Radar EN .REC' : null };
   }
 
   // ── Pregunta Sets ─────────────────────────────────────────────────────────

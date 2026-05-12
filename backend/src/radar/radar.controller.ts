@@ -86,6 +86,18 @@ export class RadarController {
     return this.service.getYoutubeStats();
   }
 
+  @Post('admin/youtube-baseline')
+  async captureBaseline(@Headers('authorization') auth: string) {
+    this.checkAdmin(auth);
+    return this.service.captureBaseline();
+  }
+
+  @Get('admin/youtube-baseline')
+  async getBaseline(@Headers('authorization') auth: string) {
+    this.checkAdmin(auth);
+    return this.service.getLatestBaseline();
+  }
+
   // ── Admin — pregunta sets ─────────────────────────────────────────────────
 
   @Get('admin/pregunta-sets')

@@ -66,6 +66,9 @@ type Youtubestat = {
   commentCount: number;
   publishedAt: string | null;
   thumbnail: string | null;
+  deltaViews: number | null;
+  deltaLikes: number | null;
+  baselineCapturedAt: string | null;
 };
 
 const emptySetForm = (): SetForm => ({
@@ -105,6 +108,8 @@ export default function Admin() {
   const [ytStats, setYtStats] = useState<Youtubestat[] | null>(null);
   const [ytLoading, setYtLoading] = useState(false);
   const [ga4, setGa4] = useState<{ total: number; pages: Record<string, number> } | null>(null);
+  const [baselineDate, setBaselineDate] = useState<string | null>(null);
+  const [capturingBaseline, setCapturingBaseline] = useState(false);
 
   const authHeaders = (t: string) => ({ Authorization: `Bearer ${t}` });
 
@@ -138,6 +143,27 @@ export default function Admin() {
     finally { setYtLoading(false); }
   };
 
+  const fetchBaseline = async (t: string) => {
+    try {
+      const res = await fetch("/api/radar/admin/youtube-baseline", { headers: authHeaders(t) });
+      if (res.ok) {
+        const json = await res.json();
+        setBaselineDate(json.capturedAt ?? null);
+      }
+    } catch { /* silent */ }
+  };
+
+  const captureBaseline = async () => {
+    if (!confirm("¿Fijar baseline ahora? Esto guardará los views y likes actuales como referencia de la campaña.")) return;
+    setCapturingBaseline(true);
+    try {
+      await fetch("/api/radar/admin/youtube-baseline", { method: "POST", headers: authHeaders(token) });
+      await fetchYtStats(token);
+      await fetchBaseline(token);
+    } catch { /* silent */ }
+    finally { setCapturingBaseline(false); }
+  };
+
   const fetchGa4 = async (t: string) => {
     try {
       const res = await fetch("/api/radar/admin/ga4-realtime", { headers: authHeaders(t) });
@@ -150,7 +176,7 @@ export default function Admin() {
 
   useEffect(() => {
     if (!token) return;
-    fetchData(token); fetchSets(token); fetchYtStats(token); fetchGa4(token);
+    fetchData(token); fetchSets(token); fetchYtStats(token); fetchGa4(token); fetchBaseline(token);
     const interval = setInterval(() => fetchGa4(token), 30000);
     return () => clearInterval(interval);
   }, [token]);
@@ -730,21 +756,38 @@ export default function Admin() {
                     Total acumulado: <strong>{totalViews.toLocaleString("es-AR")}</strong> reproducciones
                   </p>
 
-                  {/* Gráfico de barras SVG */}
+                  {/* Gráfico de barras */}
                   <div className={styles.chartWrap}>
-                    <svg width="100%" height={sorted.length * 36 + 16} className={styles.barChart}>
-                      {sorted.map((s, i) => {
-                        const barW = Math.max(4, (s.viewCount / maxViews) * 70);
-                        const y = i * 36 + 8;
-                        return (
-                          <g key={s.videoId}>
-                            <text x="0" y={y + 13} className={styles.barLabel} fill="rgba(240,240,240,0.55)" fontSize="11">{s.nombre}</text>
-                            <rect x="180" y={y} height="20" width={`${barW}%`} rx="3" fill="var(--accent)" opacity="0.85" />
-                            <text x={`calc(${barW}% + 186px)`} y={y + 14} fill="rgba(240,240,240,0.7)" fontSize="11">{(s.viewCount ?? 0).toLocaleString("es-AR")}</text>
-                          </g>
-                        );
-                      })}
-                    </svg>
+                    {sorted.map((s) => {
+                      const pct = Math.max(2, (s.viewCount / maxViews) * 100);
+                      return (
+                        <div key={s.videoId} className={styles.barRow}>
+                          <span className={styles.barName}>{s.nombre}</span>
+                          <div className={styles.barTrack}>
+                            <div className={styles.barFill} style={{ width: `${pct}%` }} />
+                          </div>
+                          <span className={styles.barValue}>{(s.viewCount ?? 0).toLocaleString("es-AR")}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Baseline controls */}
+                  <div className={styles.baselineRow}>
+                    {baselineDate ? (
+                      <span className={styles.baselineInfo}>
+                        Baseline: {new Date(baselineDate).toLocaleString("es-AR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    ) : (
+                      <span className={styles.baselineInfo}>Sin baseline — fijá uno para medir el impacto de la campaña.</span>
+                    )}
+                    <button
+                      className={styles.baselineBtn}
+                      onClick={captureBaseline}
+                      disabled={capturingBaseline}
+                    >
+                      {capturingBaseline ? "Guardando…" : "Fijar baseline ahora"}
+                    </button>
                   </div>
 
                   {/* Tabla */}
@@ -754,8 +797,9 @@ export default function Admin() {
                         <tr>
                           <th>Artista</th>
                           <th style={{ textAlign: "right" }}>Views</th>
+                          <th style={{ textAlign: "right" }}>+Views</th>
                           <th style={{ textAlign: "right" }}>👍 Likes</th>
-                          <th style={{ textAlign: "right" }}>💬 Coment.</th>
+                          <th style={{ textAlign: "right" }}>+Likes</th>
                           <th>Publicado</th>
                           <th></th>
                         </tr>
@@ -765,8 +809,13 @@ export default function Admin() {
                           <tr key={s.videoId} className={styles.row}>
                             <td className={styles.artistCell}>{s.nombre}</td>
                             <td style={{ textAlign: "right", fontWeight: 700, color: "var(--accent)" }}>{(s.viewCount ?? 0).toLocaleString("es-AR")}</td>
+                            <td style={{ textAlign: "right" }} className={styles.deltaCell}>
+                              {s.deltaViews != null ? (s.deltaViews >= 0 ? "+" : "") + s.deltaViews.toLocaleString("es-AR") : "—"}
+                            </td>
                             <td style={{ textAlign: "right" }}>{(s.likeCount ?? 0).toLocaleString("es-AR")}</td>
-                            <td style={{ textAlign: "right" }}>{(s.commentCount ?? 0).toLocaleString("es-AR")}</td>
+                            <td style={{ textAlign: "right" }} className={styles.deltaCell}>
+                              {s.deltaLikes != null ? (s.deltaLikes >= 0 ? "+" : "") + s.deltaLikes.toLocaleString("es-AR") : "—"}
+                            </td>
                             <td className={styles.dateCell}>{s.publishedAt ? new Date(s.publishedAt).toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" }) : "—"}</td>
                             <td><a href={`https://www.youtube.com/watch?v=${s.videoId}`} target="_blank" rel="noopener noreferrer" className={styles.link}>YT ↗</a></td>
                           </tr>
@@ -774,6 +823,11 @@ export default function Admin() {
                         <tr className={styles.row} style={{ borderTop: "2px solid var(--border)" }}>
                           <td className={styles.artistCell}>TOTAL</td>
                           <td style={{ textAlign: "right", fontWeight: 700, color: "var(--accent)" }}>{totalViews.toLocaleString("es-AR")}</td>
+                          <td style={{ textAlign: "right" }} className={styles.deltaCell}>
+                            {sorted.some(s => s.deltaViews != null)
+                              ? "+" + sorted.reduce((acc, s) => acc + (s.deltaViews ?? 0), 0).toLocaleString("es-AR")
+                              : "—"}
+                          </td>
                           <td colSpan={4}></td>
                         </tr>
                       </tbody>

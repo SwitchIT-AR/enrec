@@ -337,8 +337,8 @@ export default function Radar() {
                 <path d="M12 12v9" />
               </svg>
               Radar
+              <img src={logo} alt="EN .REC" className={styles.titleLogo} />
             </span>
-            <img src={logo} alt="EN .REC" className={styles.titleLogo} />
           </h1>
           <p className={styles.subtitle}>
             Estamos buscando un nuevo proyecto musical para grabar una sesión en vivo junto a EN
