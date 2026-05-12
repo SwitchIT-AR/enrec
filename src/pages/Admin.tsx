@@ -58,6 +58,16 @@ type PreguntaSet = {
 
 type SetForm = Omit<PreguntaSet, "id"> & { id?: number };
 
+type Youtubestat = {
+  nombre: string;
+  videoId: string;
+  viewCount: number;
+  likeCount: number;
+  commentCount: number;
+  publishedAt: string | null;
+  thumbnail: string | null;
+};
+
 const emptySetForm = (): SetForm => ({
   nombre: "",
   dias: [],
@@ -88,10 +98,12 @@ export default function Admin() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [expanded, setExpanded] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<"postulaciones" | "preguntas">("postulaciones");
+  const [activeTab, setActiveTab] = useState<"postulaciones" | "preguntas" | "estadisticas">("postulaciones");
   const [editingSet, setEditingSet] = useState<SetForm | null>(null);
   const [savingSet, setSavingSet] = useState(false);
   const [setsError, setSetsError] = useState("");
+  const [ytStats, setYtStats] = useState<Youtubestat[] | null>(null);
+  const [ytLoading, setYtLoading] = useState(false);
 
   const authHeaders = (t: string) => ({ Authorization: `Bearer ${t}` });
 
@@ -116,8 +128,17 @@ export default function Admin() {
     } catch { /* silent */ }
   };
 
+  const fetchYtStats = async (t: string) => {
+    setYtLoading(true);
+    try {
+      const res = await fetch("/api/radar/admin/youtube-stats", { headers: authHeaders(t) });
+      if (res.ok) setYtStats(await res.json());
+    } catch { /* silent */ }
+    finally { setYtLoading(false); }
+  };
+
   useEffect(() => {
-    if (token) { fetchData(token); fetchSets(token); }
+    if (token) { fetchData(token); fetchSets(token); fetchYtStats(token); }
   }, [token]);
 
   const handleLogin = (e: React.FormEvent) => {
@@ -284,6 +305,12 @@ export default function Admin() {
           onClick={() => setActiveTab("preguntas")}
         >
           Preguntas
+        </button>
+        <button
+          className={`${styles.tab} ${activeTab === "estadisticas" ? styles.tabActive : ""}`}
+          onClick={() => setActiveTab("estadisticas")}
+        >
+          Estadísticas
         </button>
       </div>
 
@@ -642,6 +669,79 @@ export default function Admin() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── Tab: Estadísticas ── */}
+      {activeTab === "estadisticas" && (
+        <div className={styles.statsSection}>
+
+          {/* Cards de inscriptos */}
+          {data && (() => {
+            const total = data.length;
+            const bothOk = data.filter((p) => { const { r1, r2 } = getCorrectAnswers(p); return checkAnswer(p.respuesta1, r1) && checkAnswer(p.respuesta2, r2); }).length;
+            const oneOk  = data.filter((p) => { const { r1, r2 } = getCorrectAnswers(p); const a = checkAnswer(p.respuesta1, r1); const b = checkAnswer(p.respuesta2, r2); return (a && !b) || (!a && b); }).length;
+            const noneOk = data.filter((p) => { const { r1, r2 } = getCorrectAnswers(p); return !checkAnswer(p.respuesta1, r1) && !checkAnswer(p.respuesta2, r2); }).length;
+            return (
+              <div className={styles.statsCards}>
+                <div className={styles.statCard}>
+                  <span className={styles.statNum}>{total}</span>
+                  <span className={styles.statLabel}>Inscriptos totales</span>
+                </div>
+                <div className={`${styles.statCard} ${styles.statCardOk}`}>
+                  <span className={styles.statNum}>{bothOk}</span>
+                  <span className={styles.statLabel}>Ambas respuestas correctas</span>
+                </div>
+                <div className={`${styles.statCard} ${styles.statCardHalf}`}>
+                  <span className={styles.statNum}>{oneOk}</span>
+                  <span className={styles.statLabel}>Solo una correcta</span>
+                </div>
+                <div className={`${styles.statCard} ${styles.statCardNone}`}>
+                  <span className={styles.statNum}>{noneOk}</span>
+                  <span className={styles.statLabel}>Ninguna correcta</span>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* YouTube stats */}
+          <div className={styles.ytStatsSection}>
+            <h3 className={styles.ytStatsTitle}>Sesiones EN .REC — Views en YouTube</h3>
+            {ytLoading && <p className={styles.loading}>Cargando datos de YouTube...</p>}
+            {ytStats && (() => {
+              const totalViews = ytStats.reduce((acc, s) => acc + (s.viewCount ?? 0), 0);
+              const sorted = [...ytStats].sort((a, b) => (b.viewCount ?? 0) - (a.viewCount ?? 0));
+              return (
+                <>
+                  <p className={styles.ytTotalViews}>
+                    Total acumulado: <strong>{totalViews.toLocaleString("es-AR")}</strong> reproducciones
+                  </p>
+                  <div className={styles.ytGrid}>
+                    {sorted.map((s) => (
+                      <a
+                        key={s.videoId}
+                        href={`https://www.youtube.com/watch?v=${s.videoId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={styles.ytCard}
+                      >
+                        {s.thumbnail && <img src={s.thumbnail} alt={s.nombre} className={styles.ytThumb} />}
+                        <div className={styles.ytCardBody}>
+                          <span className={styles.ytCardName}>{s.nombre}</span>
+                          <span className={styles.ytCardViews}>{(s.viewCount ?? 0).toLocaleString("es-AR")} views</span>
+                          <div className={styles.ytCardMeta}>
+                            <span>👍 {(s.likeCount ?? 0).toLocaleString("es-AR")}</span>
+                            <span>💬 {(s.commentCount ?? 0).toLocaleString("es-AR")}</span>
+                            {s.publishedAt && <span>{new Date(s.publishedAt).toLocaleDateString("es-AR", { month: "short", year: "numeric" })}</span>}
+                          </div>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                </>
+              );
+            })()}
+          </div>
         </div>
       )}
     </div>

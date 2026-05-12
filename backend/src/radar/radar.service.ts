@@ -1,4 +1,18 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+
+const SESSIONS = [
+  { nombre: 'Manu Martínez', videoId: '3u0bbataius' },
+  { nombre: 'Mariana Michi', videoId: '__KGJ4_HmgY' },
+  { nombre: 'Fepo Cambiasso', videoId: 'zNRcYUV6ZdE' },
+  { nombre: 'Coval', videoId: '3CRVIZJU8F8' },
+  { nombre: 'Francisca y Los Exploradores', videoId: '4GrL1ccJ3mo' },
+  { nombre: 'Luaso', videoId: 'yEq3rOBf0SM' },
+  { nombre: 'Martu Brito', videoId: 'BZivQ-XM7tI' },
+  { nombre: 'Motel', videoId: 'nTQM4gD68Yo' },
+  { nombre: 'JJJulian', videoId: 'jngaRABfN50' },
+  { nombre: 'Mina', videoId: 'kLsmlObEMUk' },
+  { nombre: 'Los Palmos', videoId: 'qXqajLd4YHI' },
+];
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
@@ -41,6 +55,33 @@ export class RadarService {
 
   async deletePostulacion(id: number): Promise<void> {
     await this.repo.delete(id);
+  }
+
+  async getYoutubeStats(): Promise<Record<string, unknown>[]> {
+    const apiKey = this.config.get<string>('YOUTUBE_API_KEY');
+    if (!apiKey) return SESSIONS.map((s) => ({ ...s, error: 'no_api' }));
+
+    const ids = SESSIONS.map((s) => s.videoId).join(',');
+    try {
+      const res = await fetch(
+        `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${ids}&key=${apiKey}`,
+      );
+      const data = await res.json();
+      return SESSIONS.map((session) => {
+        const item = data.items?.find((i: { id: string }) => i.id === session.videoId);
+        return {
+          nombre: session.nombre,
+          videoId: session.videoId,
+          viewCount: parseInt(item?.statistics?.viewCount ?? '0', 10),
+          likeCount: parseInt(item?.statistics?.likeCount ?? '0', 10),
+          commentCount: parseInt(item?.statistics?.commentCount ?? '0', 10),
+          publishedAt: item?.snippet?.publishedAt ?? null,
+          thumbnail: item?.snippet?.thumbnails?.medium?.url ?? null,
+        };
+      });
+    } catch {
+      return SESSIONS.map((s) => ({ ...s, error: 'fetch_error' }));
+    }
   }
 
   // ── Pregunta Sets ─────────────────────────────────────────────────────────

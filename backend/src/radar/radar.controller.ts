@@ -74,6 +74,12 @@ export class RadarController {
     await this.service.deletePostulacion(id);
   }
 
+  @Get('admin/youtube-stats')
+  async getYoutubeStats(@Headers('authorization') auth: string) {
+    this.checkAdmin(auth);
+    return this.service.getYoutubeStats();
+  }
+
   // ── Admin — pregunta sets ─────────────────────────────────────────────────
 
   @Get('admin/pregunta-sets')
