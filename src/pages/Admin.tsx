@@ -186,16 +186,21 @@ export default function Admin() {
                 <th>Email</th>
                 <th>Instagram</th>
                 <th>YouTube</th>
-                <th>Respuestas</th>
+                <th title="Francisca: ¿cuántas veces aparecen los camarógrafos?">Francisca R.</th>
+                <th title="Michi: ¿cuántos riffs/solos del guitarrista?">Michi R.</th>
+                <th>Estado</th>
                 <th>Fecha</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
               {data.map((p) => {
+                const r1num = p.respuesta1.split("|")[0].trim();
+                const r2num = p.respuesta2.split("|")[0].trim();
                 const r1ok = checkAnswer(p.respuesta1, CORRECT_R1);
                 const r2ok = checkAnswer(p.respuesta2, CORRECT_R2);
                 const allOk = r1ok && r2ok;
+                const noneOk = !r1ok && !r2ok;
                 return (
                   <>
                     <tr
@@ -221,13 +226,20 @@ export default function Admin() {
                           YT ↗
                         </a>
                       </td>
+                      <td className={styles.answerNumCell}>
+                        <span className={r1ok ? styles.numOk : styles.numWrong}>
+                          {r1num || "—"}
+                        </span>
+                      </td>
+                      <td className={styles.answerNumCell}>
+                        <span className={r2ok ? styles.numOk : styles.numWrong}>
+                          {r2num || "—"}
+                        </span>
+                      </td>
                       <td>
-                        {allOk
-                          ? <span className={styles.answerBadgeOk}>✓ Correctas</span>
-                          : <span className={styles.answerBadgeMixed}>
-                              {r1ok ? "✓" : "✗"} / {r2ok ? "✓" : "✗"}
-                            </span>
-                        }
+                        {allOk && <span className={styles.answerBadgeOk}>✓ Correctas</span>}
+                        {!allOk && !noneOk && <span className={styles.answerBadgeHalf}>1/2</span>}
+                        {noneOk && <span className={styles.answerBadgeNone}>✗ Incorrectas</span>}
                       </td>
                       <td className={styles.dateCell}>{formatDate(p.created_at)}</td>
                       <td className={styles.chevron}>{expanded === p.id ? "▲" : "▼"}</td>
@@ -235,7 +247,7 @@ export default function Admin() {
 
                     {expanded === p.id && (
                       <tr key={`${p.id}-detail`} className={styles.detailRow}>
-                        <td colSpan={9}>
+                        <td colSpan={11}>
                           <div className={styles.detail}>
                             <div className={styles.detailGrid}>
 
