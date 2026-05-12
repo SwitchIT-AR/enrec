@@ -316,7 +316,6 @@ export default function Radar() {
         <div className={styles.formHeader}>
           <h1 className={styles.title}>
             <span className={styles.titleTop}>
-              Radar
               <svg
                 className={styles.radarIcon}
                 xmlns="http://www.w3.org/2000/svg"
@@ -333,6 +332,7 @@ export default function Radar() {
                 <path d="M18.832 17.86a9 9 0 1 0 -6.832 3.14" />
                 <path d="M12 12v9" />
               </svg>
+              Radar
             </span>
             <img src={logo} alt="EN .REC" className={styles.titleLogo} />
           </h1>

@@ -45,6 +45,7 @@ type PreguntaSet = {
   nombre: string;
   dias: number[];
   activo: boolean;
+  es_default: boolean;
   p1_etiqueta: string;
   p1_pregunta: string;
   p1_youtube_url: string;
@@ -61,6 +62,7 @@ const emptySetForm = (): SetForm => ({
   nombre: "",
   dias: [],
   activo: true,
+  es_default: false,
   p1_etiqueta: "",
   p1_pregunta: "",
   p1_youtube_url: "",
@@ -427,26 +429,61 @@ export default function Admin() {
           </div>
 
           {/* Preguntas por defecto (fallback siempre visible) */}
-          <div className={`${styles.setCard} ${styles.setCardDefault}`}>
-            <div className={styles.setCardHeader}>
-              <div className={styles.setCardMeta}>
-                <span className={styles.setCardName}>Preguntas por defecto</span>
-                <span className={styles.setDefaultBadge}>Fallback — activo cuando no hay set para el día</span>
+          {(() => {
+            const dbDefault = sets.find((s) => s.es_default);
+            return (
+              <div className={`${styles.setCard} ${styles.setCardDefault}`}>
+                <div className={styles.setCardHeader}>
+                  <div className={styles.setCardMeta}>
+                    <span className={styles.setCardName}>Preguntas por defecto</span>
+                    <span className={styles.setDefaultBadge}>Fallback — activo cuando no hay set para el día</span>
+                  </div>
+                  <div className={styles.setCardActions}>
+                    {dbDefault ? (
+                      <button className={styles.setEditBtn} onClick={() => { setEditingSet({ ...dbDefault }); setSetsError(""); }}>
+                        Editar
+                      </button>
+                    ) : (
+                      <button
+                        className={styles.setEditBtn}
+                        onClick={() => {
+                          setEditingSet({
+                            nombre: "Preguntas por defecto",
+                            dias: [],
+                            activo: true,
+                            es_default: true,
+                            p1_etiqueta: DEFAULT_P1_LABEL,
+                            p1_pregunta: DEFAULT_P1_Q,
+                            p1_youtube_url: "https://www.youtube.com/embed/4GrL1ccJ3mo",
+                            p1_respuesta_correcta: CORRECT_R1,
+                            p2_etiqueta: DEFAULT_P2_LABEL,
+                            p2_pregunta: DEFAULT_P2_Q,
+                            p2_youtube_url: "https://www.youtube.com/embed/__KGJ4_HmgY",
+                            p2_respuesta_correcta: CORRECT_R2,
+                          });
+                          setSetsError("");
+                        }}
+                      >
+                        Configurar
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <div className={styles.setCardQuestions}>
+                  <div className={styles.setCardQ}>
+                    <span className={styles.setCardQLabel}>P1</span>
+                    <span className={styles.setCardQText}>{dbDefault?.p1_etiqueta ?? DEFAULT_P1_LABEL} — {dbDefault?.p1_pregunta ?? DEFAULT_P1_Q}</span>
+                    <span className={styles.setCardQCorrect}>→ {dbDefault?.p1_respuesta_correcta ?? CORRECT_R1}</span>
+                  </div>
+                  <div className={styles.setCardQ}>
+                    <span className={styles.setCardQLabel}>P2</span>
+                    <span className={styles.setCardQText}>{dbDefault?.p2_etiqueta ?? DEFAULT_P2_LABEL} — {dbDefault?.p2_pregunta ?? DEFAULT_P2_Q}</span>
+                    <span className={styles.setCardQCorrect}>→ {dbDefault?.p2_respuesta_correcta ?? CORRECT_R2}</span>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className={styles.setCardQuestions}>
-              <div className={styles.setCardQ}>
-                <span className={styles.setCardQLabel}>P1</span>
-                <span className={styles.setCardQText}>{DEFAULT_P1_LABEL} — {DEFAULT_P1_Q}</span>
-                <span className={styles.setCardQCorrect}>→ {CORRECT_R1}</span>
-              </div>
-              <div className={styles.setCardQ}>
-                <span className={styles.setCardQLabel}>P2</span>
-                <span className={styles.setCardQText}>{DEFAULT_P2_LABEL} — {DEFAULT_P2_Q}</span>
-                <span className={styles.setCardQCorrect}>→ {CORRECT_R2}</span>
-              </div>
-            </div>
-          </div>
+            );
+          })()}
 
           {/* Lista de sets configurados */}
           <div className={styles.setsList}>
@@ -509,6 +546,14 @@ export default function Admin() {
                     onChange={(e) => setEditingSet({ ...editingSet, activo: e.target.checked })}
                   />
                   Activo
+                </label>
+                <label className={styles.setFormCheckbox}>
+                  <input
+                    type="checkbox"
+                    checked={editingSet.es_default ?? false}
+                    onChange={(e) => setEditingSet({ ...editingSet, es_default: e.target.checked })}
+                  />
+                  Predeterminado
                 </label>
               </div>
 

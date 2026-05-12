@@ -15,6 +15,9 @@ export class PreguntaSet {
   @Column({ default: true })
   activo: boolean;
 
+  @Column({ default: false })
+  es_default: boolean;
+
   @Column({ nullable: true })
   p1_etiqueta: string;
 

@@ -41,39 +41,51 @@ export class RadarService {
 
   // ── Pregunta Sets ─────────────────────────────────────────────────────────
 
+  private toPublicSet(s: PreguntaSet): Record<string, unknown> {
+    return {
+      id: s.id,
+      nombre: s.nombre,
+      p1_etiqueta: s.p1_etiqueta,
+      p1_pregunta: s.p1_pregunta,
+      p1_youtube_url: s.p1_youtube_url,
+      p2_etiqueta: s.p2_etiqueta,
+      p2_pregunta: s.p2_pregunta,
+      p2_youtube_url: s.p2_youtube_url,
+    };
+  }
+
   async getActivePreguntaSet(): Promise<Record<string, unknown> | null> {
     const sets = await this.setRepo.find({ where: { activo: true } });
     const today = new Date().getDay(); // 0=Dom, 1=Lun, ..., 6=Sáb
-    const active = sets.find((s) => {
+    // Primero: set que coincide con el día de hoy
+    const dayMatch = sets.find((s) => {
       const dias = Array.isArray(s.dias) ? s.dias : [];
       return dias.map(Number).includes(today);
     });
-    if (!active) return null;
-    // No exponer respuestas correctas al público
-    return {
-      id: active.id,
-      nombre: active.nombre,
-      p1_etiqueta: active.p1_etiqueta,
-      p1_pregunta: active.p1_pregunta,
-      p1_youtube_url: active.p1_youtube_url,
-      p2_etiqueta: active.p2_etiqueta,
-      p2_pregunta: active.p2_pregunta,
-      p2_youtube_url: active.p2_youtube_url,
-    };
+    if (dayMatch) return this.toPublicSet(dayMatch);
+    // Fallback: set marcado como predeterminado
+    const defaultSet = sets.find((s) => s.es_default);
+    return defaultSet ? this.toPublicSet(defaultSet) : null;
   }
 
   findAllPreguntaSets(): Promise<PreguntaSet[]> {
     return this.setRepo.find({ order: { id: 'ASC' } });
   }
 
-  createPreguntaSet(dto: PreguntaSetDto): Promise<PreguntaSet> {
-    const set = this.setRepo.create({ ...dto, activo: dto.activo ?? true });
+  async createPreguntaSet(dto: PreguntaSetDto): Promise<PreguntaSet> {
+    if (dto.es_default) {
+      await this.setRepo.update({}, { es_default: false });
+    }
+    const set = this.setRepo.create({ ...dto, activo: dto.activo ?? true, es_default: dto.es_default ?? false });
     return this.setRepo.save(set);
   }
 
   async updatePreguntaSet(id: number, dto: PreguntaSetDto): Promise<PreguntaSet> {
     const existing = await this.setRepo.findOneBy({ id });
     if (!existing) throw new NotFoundException('Set no encontrado');
+    if (dto.es_default) {
+      await this.setRepo.update({}, { es_default: false });
+    }
     Object.assign(existing, dto);
     return this.setRepo.save(existing);
   }

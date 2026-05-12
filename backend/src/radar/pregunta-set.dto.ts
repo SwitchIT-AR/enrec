@@ -14,6 +14,10 @@ export class PreguntaSetDto {
   @IsOptional()
   activo?: boolean;
 
+  @IsBoolean()
+  @IsOptional()
+  es_default?: boolean;
+
   @IsString()
   @IsOptional()
   @MaxLength(200)
