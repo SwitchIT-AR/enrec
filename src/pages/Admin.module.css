@@ -240,16 +240,20 @@
 .chevron {
   color: var(--muted) !important;
   font-size: 10px;
+  width: 1%;
+  white-space: nowrap;
+}
+
+.chevronCell {
   display: flex;
   align-items: center;
-  gap: 8px;
-  white-space: nowrap;
+  gap: 6px;
 }
 
 .deleteRowBtn {
   background: none;
   border: none;
-  color: rgba(255, 80, 80, 0.5);
+  color: rgba(255, 80, 80, 0.4);
   font-size: 11px;
   cursor: pointer;
   padding: 2px 4px;

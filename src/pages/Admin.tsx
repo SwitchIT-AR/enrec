@@ -359,12 +359,14 @@ export default function Admin() {
                           </td>
                           <td className={styles.dateCell}>{formatDate(p.created_at)}</td>
                           <td className={styles.chevron}>
-                            <span>{expanded === p.id ? "▲" : "▼"}</span>
-                            <button
-                              className={styles.deleteRowBtn}
-                              onClick={(e) => { e.stopPropagation(); deletePostulacion(p.id); }}
-                              title="Eliminar postulación"
-                            >✕</button>
+                            <div className={styles.chevronCell}>
+                              <span>{expanded === p.id ? "▲" : "▼"}</span>
+                              <button
+                                className={styles.deleteRowBtn}
+                                onClick={(e) => { e.stopPropagation(); deletePostulacion(p.id); }}
+                                title="Eliminar postulación"
+                              >✕</button>
+                            </div>
                           </td>
                         </tr>
 
