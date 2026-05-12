@@ -24,6 +24,10 @@ export class RadarController {
   @Post()
   @HttpCode(200)
   async submit(@Body() dto: CreateRadarDto, @Ip() ip: string) {
+    const startsWithDigit = (s: string) => /^\d/.test(s?.trim() ?? '');
+    if (!startsWithDigit(dto.respuesta1) || !startsWithDigit(dto.respuesta2)) {
+      throw new BadRequestException({ code: 'outdated_form', message: 'Formulario desactualizado' });
+    }
     await this.service.create(dto, ip);
     return { ok: true };
   }

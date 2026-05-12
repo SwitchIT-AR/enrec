@@ -42,7 +42,7 @@ const sessions = [
 
 const socials = [
   { label: "YouTube", href: "https://www.youtube.com/@En.REC-" },
-  { label: "Instagram", href: "https://www.instagram.com/enrec.ar" },
+  { label: "Instagram", href: "https://www.instagram.com/en.rec/" },
   { label: "Spotify", href: "https://open.spotify.com/show/enrec" },
 ];
 

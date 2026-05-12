@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { FormEvent, ChangeEvent } from "react";
 import styles from "./Radar.module.css";
 
@@ -118,13 +118,23 @@ function validate(data: FormData, verifyStatus: VerifyStatus): Errors {
   return errs;
 }
 
+const SESSION_KEY = "radar_draft";
+
 export default function Radar() {
   const [form, setForm] = useState<FormData>(initialData);
   const [errors, setErrors] = useState<Errors>({});
   const [tycOpen, setTycOpen] = useState(false);
-  const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "sending" | "success" | "error" | "outdated">("idle");
   const [verifyStatus, setVerifyStatus] = useState<VerifyStatus>("idle");
   const [verifiedChannelTitle, setVerifiedChannelTitle] = useState("");
+
+  useEffect(() => {
+    const draft = sessionStorage.getItem(SESSION_KEY);
+    if (draft) {
+      try { setForm(JSON.parse(draft)); } catch { /* ignore */ }
+      sessionStorage.removeItem(SESSION_KEY);
+    }
+  }, []);
 
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -211,12 +221,38 @@ export default function Radar() {
         setForm(initialData);
         window.scrollTo({ top: 0, behavior: "smooth" });
       } else {
-        setStatus("error");
+        const body = await res.json().catch(() => ({}));
+        if (body?.message?.code === "outdated_form" || body?.code === "outdated_form") {
+          sessionStorage.setItem(SESSION_KEY, JSON.stringify(form));
+          setStatus("outdated");
+        } else {
+          setStatus("error");
+        }
       }
     } catch {
       setStatus("error");
     }
   };
+
+  if (status === "outdated") {
+    return (
+      <div className={styles.successScreen}>
+        <div className={styles.successCard}>
+          <div className={styles.successDot} style={{ background: "#fbbf24" }} />
+          <h1 className={styles.successTitle}>Tu formulario está desactualizado</h1>
+          <p className={styles.successText}>
+            Actualizamos el formulario de inscripción. Por favor recargá la página para acceder a la versión más reciente y volvé a completarlo.
+          </p>
+          <button
+            className={styles.reloadBtn}
+            onClick={() => window.location.reload()}
+          >
+            Recargar página
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (status === "success") {
     return (

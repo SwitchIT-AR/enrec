@@ -19,6 +19,8 @@ export class RadarService {
   async create(dto: CreateRadarDto, ip: string): Promise<Postulacion> {
     const entity = this.repo.create({
       ...dto,
+      respuesta1: dto.respuesta1,
+      respuesta2: dto.respuesta2,
       yt_channel: dto.ytChannel ?? null,
       yt_subscribed_verified: dto.ytSubscribedVerified ?? false,
       ip_address: ip,

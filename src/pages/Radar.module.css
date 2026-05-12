@@ -503,6 +503,23 @@
   color: var(--accent);
 }
 
+.reloadBtn {
+  padding: 12px 28px;
+  background: #fbbf24;
+  color: #0a0a0a;
+  border: none;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.reloadBtn:hover {
+  background: #f59e0b;
+}
+
 /* ── Responsive ── */
 @media (max-width: 480px) {
   .fieldset {
