@@ -744,9 +744,15 @@ export default function Admin() {
             <h3 className={styles.ytStatsTitle}>Sesiones EN .REC — Views en YouTube</h3>
             {ytLoading && <p className={styles.loading}>Cargando datos de YouTube...</p>}
             {ytStats && (() => {
+              const hasError = ytStats.some((s) => (s as { error?: string }).error);
+              if (hasError) return (
+                <p className={styles.loading} style={{ color: "rgba(225,82,56,0.8)" }}>
+                  Error al cargar datos de YouTube. Verificá la API key o revisá los logs del backend.
+                </p>
+              );
               const sorted = [...ytStats].sort((a, b) => (b.viewCount ?? 0) - (a.viewCount ?? 0));
               const totalViews = sorted.reduce((acc, s) => acc + (s.viewCount ?? 0), 0);
-              const maxViews = sorted[0]?.viewCount ?? 1;
+              const maxViews = Math.max(1, sorted[0]?.viewCount ?? 0);
               return (
                 <>
                   <p className={styles.ytTotalViews}>
@@ -756,7 +762,7 @@ export default function Admin() {
                   {/* Gráfico de barras */}
                   <div className={styles.chartWrap}>
                     {sorted.map((s) => {
-                      const pct = Math.max(2, (s.viewCount / maxViews) * 100);
+                      const pct = maxViews > 0 ? Math.max(2, (s.viewCount / maxViews) * 100) : 2;
                       return (
                         <div key={s.videoId} className={styles.barRow}>
                           <span className={styles.barName}>{s.nombre}</span>

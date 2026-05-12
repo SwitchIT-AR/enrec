@@ -64,46 +64,55 @@ export class RadarService {
     const apiKey = this.config.get<string>('YOUTUBE_API_KEY');
     if (!apiKey) return SESSIONS.map((s) => ({ ...s, error: 'no_api' }));
 
-    const ids = SESSIONS.map((s) => s.videoId).join(',');
+    // ── YouTube API ───────────────────────────────────────────────────────────
+    let ytData: Record<string, unknown> = {};
     try {
+      const ids = SESSIONS.map((s) => s.videoId).join(',');
       const res = await fetch(
         `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${ids}&key=${apiKey}`,
       );
-      const data = await res.json();
+      ytData = await res.json();
+      if ((ytData as { error?: unknown }).error) {
+        this.logger.error('YouTube API error', JSON.stringify(ytData));
+      }
+    } catch (e) {
+      this.logger.error('YouTube fetch failed', e);
+      return SESSIONS.map((s) => ({ ...s, error: 'fetch_error' }));
+    }
 
-      // Load latest baseline snapshot for each video (if any)
+    // ── Baseline (no bloquea si la tabla no existe aún) ───────────────────────
+    let baselineMap = new Map<string, YoutubeBaseline>();
+    try {
       const baselines = await this.baselineRepo
         .createQueryBuilder('b')
         .distinctOn(['b.video_id'])
         .orderBy('b.video_id')
         .addOrderBy('b.captured_at', 'DESC')
         .getMany();
-      const baselineMap = new Map(baselines.map((b) => [b.video_id, b]));
-
-      return SESSIONS.map((session) => {
-        const item = data.items?.find((i: { id: string }) => i.id === session.videoId);
-        const viewCount = parseInt(item?.statistics?.viewCount ?? '0', 10);
-        const likeCount = parseInt(item?.statistics?.likeCount ?? '0', 10);
-        const commentCount = parseInt(item?.statistics?.commentCount ?? '0', 10);
-        const baseline = baselineMap.get(session.videoId);
-        return {
-          nombre: session.nombre,
-          videoId: session.videoId,
-          viewCount,
-          likeCount,
-          commentCount,
-          publishedAt: item?.snippet?.publishedAt ?? null,
-          thumbnail: item?.snippet?.thumbnails?.medium?.url ?? null,
-          baselineViewCount: baseline ? Number(baseline.view_count) : null,
-          baselineLikeCount: baseline ? Number(baseline.like_count) : null,
-          baselineCapturedAt: baseline ? baseline.captured_at : null,
-          deltaViews: baseline ? viewCount - Number(baseline.view_count) : null,
-          deltaLikes: baseline ? likeCount - Number(baseline.like_count) : null,
-        };
-      });
-    } catch {
-      return SESSIONS.map((s) => ({ ...s, error: 'fetch_error' }));
+      baselineMap = new Map(baselines.map((b) => [b.video_id, b]));
+    } catch (e) {
+      this.logger.warn('Baseline query failed (tabla puede no existir aún):', (e as Error).message);
     }
+
+    const items = (ytData as { items?: { id: string; statistics?: Record<string, string>; snippet?: Record<string, unknown> }[] }).items ?? [];
+    return SESSIONS.map((session) => {
+      const item = items.find((i) => i.id === session.videoId);
+      const viewCount = parseInt(item?.statistics?.viewCount ?? '0', 10);
+      const likeCount = parseInt(item?.statistics?.likeCount ?? '0', 10);
+      const commentCount = parseInt(item?.statistics?.commentCount ?? '0', 10);
+      const baseline = baselineMap.get(session.videoId);
+      return {
+        nombre: session.nombre,
+        videoId: session.videoId,
+        viewCount,
+        likeCount,
+        commentCount,
+        publishedAt: (item?.snippet?.publishedAt as string) ?? null,
+        thumbnail: (item?.snippet as { thumbnails?: { medium?: { url?: string } } })?.thumbnails?.medium?.url ?? null,
+        deltaViews: baseline ? viewCount - Number(baseline.view_count) : null,
+        deltaLikes: baseline ? likeCount - Number(baseline.like_count) : null,
+      };
+    });
   }
 
   async captureBaseline(): Promise<{ captured: number; capturedAt: Date }> {
