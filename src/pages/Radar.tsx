@@ -9,25 +9,45 @@ const TYC_TEXT = `TÉRMINOS Y CONDICIONES — CONVOCATORIA "RADAR EN .REC"
 1. PARTICIPACIÓN
 Pueden participar artistas solistas y bandas de cualquier género musical con residencia en Argentina. La inscripción es gratuita y no genera ningún tipo de obligación contractual entre el postulante y EN .REC.
 
-2. SELECCIÓN
+REQUISITOS PARA PARTICIPAR
+— Contar con un proyecto musical activo (solista o banda).
+— Tener material disponible para escuchar (Spotify, YouTube u otras plataformas).
+— Contar con registro audiovisual en vivo (shows o sesiones sin edición excesiva).
+— Enviar una breve descripción del proyecto artístico.
+— Tener redes sociales activas.
+
+2. CRITERIOS DE SELECCIÓN
+La convocatoria está orientada a proyectos con identidad artística definida y propuesta propia.
+— Se valorará especialmente la originalidad, la interpretación en vivo y la búsqueda estética del proyecto.
+— No se priorizará la cantidad de seguidores ni métricas de redes sociales.
+— La selección estará basada en la afinidad artística y conceptual con la identidad de EN .REC.
+— El proyecto deberá tener disponibilidad y predisposición para participar activamente del proceso creativo y producción de la sesión.
+— Se valorará la capacidad de reinterpretar o adaptar el material musical al formato de sesión en vivo.
+
 El equipo de EN .REC realizará una revisión de todos los proyectos recibidos y seleccionará un conjunto de finalistas. Entre los finalistas se elegirá un proyecto ganador. EN .REC se reserva el derecho de realizar dicha selección sin necesidad de justificación pública.
 
-3. SESIÓN GANADORA
+3. SOBRE LA SESIÓN
+— La locación, formato y propuesta estética serán definidas en conjunto entre EN .REC y el proyecto seleccionado.
+— EN .REC se reserva el derecho de adaptar el formato de la sesión según necesidades artísticas o de producción.
+— Las sesiones serán desarrolladas creativamente en conjunto con el/la artista o banda seleccionada.
+— La sesión final será publicada en las plataformas oficiales de EN .REC.
+
+4. DERECHOS
 El proyecto seleccionado recibirá una sesión en vivo grabada y producida por el equipo de EN .REC. La sesión será publicada en los canales oficiales de EN .REC (YouTube, Instagram y/u otras plataformas). EN .REC conservará los derechos de producción audiovisual de la sesión. El artista/banda conservará los derechos sobre su música.
 
-4. ORIGINALIDAD
+5. ORIGINALIDAD
 Al postularse, el participante declara que el proyecto presentado es de su autoría y que cuenta con los derechos necesarios sobre el material musical que eventualmente se grabaría. EN .REC no se hace responsable de conflictos de derechos sobre el material artístico.
 
-5. DATOS PERSONALES
+6. DATOS PERSONALES
 Los datos aportados en este formulario serán utilizados exclusivamente para la gestión de la convocatoria Radar EN .REC. No serán cedidos a terceros ni utilizados con fines comerciales ajenos a EN .REC.
 
-6. CIERRE DE INSCRIPCIONES
+7. CIERRE DE INSCRIPCIONES
 Las inscripciones estarán abiertas hasta el 31 de Julio de 2026 a las 23:59 (hora de Argentina). Los formularios recibidos fuera de ese plazo no serán considerados.
 
-7. COMUNICACIÓN
+8. COMUNICACIÓN
 EN .REC contactará únicamente a los proyectos seleccionados como finalistas. Si no recibís respuesta dentro de las 4 semanas posteriores al cierre de inscripciones, se entiende que el proyecto no fue seleccionado en esta edición.
 
-8. MODIFICACIONES
+9. MODIFICACIONES
 EN .REC se reserva el derecho de modificar o cancelar la convocatoria en cualquier momento, informando a través de sus canales oficiales.
 
 Al enviar este formulario, declarás haber leído y aceptado íntegramente estos términos y condiciones.`;
