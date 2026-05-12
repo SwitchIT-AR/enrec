@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Postulacion } from './radar/radar.entity';
+import { PreguntaSet } from './radar/pregunta-set.entity';
+import { YoutubeBaseline } from './radar/youtube-baseline.entity';
 import { RadarModule } from './radar/radar.module';
 
 @Module({
@@ -16,8 +18,8 @@ import { RadarModule } from './radar/radar.module';
         username: cfg.get('DB_USER', 'enrec'),
         password: cfg.get('DB_PASSWORD', ''),
         database: cfg.get('DB_NAME', 'enrec'),
-        entities: [Postulacion],
-        synchronize: true, // crea/actualiza la tabla automáticamente
+        entities: [Postulacion, PreguntaSet, YoutubeBaseline],
+        synchronize: true,
       }),
     }),
     RadarModule,
