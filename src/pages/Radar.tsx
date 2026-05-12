@@ -5,6 +5,32 @@ import logo from "../assets/logo-enrec.png";
 
 const API_URL = "/api/radar";
 
+type ActiveSet = {
+  id: number;
+  nombre: string;
+  p1_etiqueta: string;
+  p1_pregunta: string;
+  p1_youtube_url: string;
+  p2_etiqueta: string;
+  p2_pregunta: string;
+  p2_youtube_url: string;
+};
+
+const DEFAULTS = {
+  p1_etiqueta: "Sesión #7 — Francisca y Los Exploradores",
+  p1_pregunta: "En la sesión de Francisca y Los Exploradores, por momentos se puede ver a los camarógrafos filmando... ¿cuántas veces aparecen en cámara?",
+  p1_youtube_url: "https://www.youtube.com/embed/4GrL1ccJ3mo",
+  p2_etiqueta: "Sesión #8 — Mariana Michi",
+  p2_pregunta: "¿Cuántos riffs y/o solos toca el guitarrista a lo largo de la sesión? Momentos instrumentales donde Mariana no canta.",
+  p2_youtube_url: "https://www.youtube.com/embed/__KGJ4_HmgY",
+};
+
+function toEmbedUrl(url: string): string {
+  if (!url) return "";
+  const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+  return m ? `https://www.youtube.com/embed/${m[1]}` : url;
+}
+
 const TYC_TEXT = `TÉRMINOS Y CONDICIONES — CONVOCATORIA "RADAR EN .REC"
 
 1. PARTICIPACIÓN
@@ -128,13 +154,20 @@ export default function Radar() {
   const [status, setStatus] = useState<"idle" | "sending" | "success" | "error" | "outdated">("idle");
   const [verifyStatus, setVerifyStatus] = useState<VerifyStatus>("idle");
   const [verifiedChannelTitle, setVerifiedChannelTitle] = useState("");
+  const [activeSet, setActiveSet] = useState<ActiveSet | null>(null);
 
   useEffect(() => {
+    // Restaurar borrador si viene de un reload por formulario desactualizado
     const draft = sessionStorage.getItem(SESSION_KEY);
     if (draft) {
       try { setForm(JSON.parse(draft)); } catch { /* ignore */ }
       sessionStorage.removeItem(SESSION_KEY);
     }
+    // Cargar el set de preguntas activo para hoy
+    fetch("/api/radar/preguntas/activo")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => { if (data?.id) setActiveSet(data); })
+      .catch(() => { /* usar defaults */ });
   }, []);
 
   const handleChange = (
@@ -208,6 +241,7 @@ export default function Radar() {
       respuesta2:           form.respuesta2 + (form.respuesta2Comment.trim() ? ` | ${form.respuesta2Comment.trim()}` : ""),
       ytChannel:            form.ytChannel,
       ytSubscribedVerified: verifyStatus === "verified",
+      preguntaSetId:        activeSet?.id,
     };
 
     try {
@@ -272,6 +306,8 @@ export default function Radar() {
       </div>
     );
   }
+
+  const q = activeSet ?? DEFAULTS;
 
   return (
     <div className={styles.page}>
@@ -418,13 +454,11 @@ export default function Radar() {
 
             {/* Video 1 */}
             <div className={styles.videoBlock}>
-              <p className={styles.videoLabel}>
-                Sesión #7 — Francisca y Los Exploradores
-              </p>
+              <p className={styles.videoLabel}>{q.p1_etiqueta}</p>
               <div className={styles.embedWrapper}>
                 <iframe
-                  src="https://www.youtube.com/embed/4GrL1ccJ3mo"
-                  title="Francisca y Los Exploradores - Sesión #7 EN .REC"
+                  src={toEmbedUrl(q.p1_youtube_url)}
+                  title={q.p1_etiqueta}
                   style={{ border: "none" }}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
@@ -433,8 +467,7 @@ export default function Radar() {
               </div>
               <div className={styles.field}>
                 <label className={styles.label}>
-                  En la sesión de Francisca y Los Exploradores, por momentos se puede ver a los
-                  camarógrafos filmando... ¿cuántas veces aparecen en cámara?{" "}
+                  {q.p1_pregunta}{" "}
                   <span className={styles.req}>*</span>
                 </label>
                 <div className={styles.answerRow}>
@@ -461,13 +494,11 @@ export default function Radar() {
 
             {/* Video 2 */}
             <div className={styles.videoBlock}>
-              <p className={styles.videoLabel}>
-                Sesión #8 — Mariana Michi
-              </p>
+              <p className={styles.videoLabel}>{q.p2_etiqueta}</p>
               <div className={styles.embedWrapper}>
                 <iframe
-                  src="https://www.youtube.com/embed/__KGJ4_HmgY"
-                  title="Mariana Michi - Sesión #8 EN .REC"
+                  src={toEmbedUrl(q.p2_youtube_url)}
+                  title={q.p2_etiqueta}
                   style={{ border: "none" }}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
@@ -476,7 +507,7 @@ export default function Radar() {
               </div>
               <div className={styles.field}>
                 <label className={styles.label}>
-                  ¿Cuántos riffs y/o solos toca el guitarrista a lo largo de la sesión? Momentos instrumentales donde Mariana no canta. <span className={styles.req}>*</span>
+                  {q.p2_pregunta} <span className={styles.req}>*</span>
                 </label>
                 <div className={styles.answerRow}>
                   <input

@@ -41,6 +41,9 @@ export class Postulacion {
   @Column({ nullable: true })
   ip_address: string;
 
+  @Column({ type: 'integer', nullable: true })
+  pregunta_set_id: number | null;
+
   @CreateDateColumn()
   created_at: Date;
 }

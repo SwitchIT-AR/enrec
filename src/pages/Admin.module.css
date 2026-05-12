@@ -382,3 +382,439 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Tabs ── */
+.tabsBar {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 28px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0;
+}
+
+.tab {
+  padding: 8px 20px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  margin-bottom: -1px;
+}
+
+.tab:hover {
+  color: var(--text);
+}
+
+.tabActive {
+  color: var(--text);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+
+/* ── Set label en tabla ── */
+.setLabelCell {
+  white-space: nowrap;
+}
+
+.setChip {
+  display: inline-block;
+  padding: 2px 8px;
+  background: rgba(255, 51, 51, 0.1);
+  border: 1px solid rgba(255, 51, 51, 0.2);
+  border-radius: 99px;
+  font-size: 11px;
+  color: rgba(255, 100, 100, 0.9);
+  font-weight: 600;
+}
+
+.setChipDefault {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* ── Sección preguntas ── */
+.setsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.setsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.setsHint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.newSetBtn {
+  padding: 8px 18px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.newSetBtn:hover {
+  background: #e62a2a;
+}
+
+/* ── Set cards ── */
+.setsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.setCard {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 20px;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.setCardInactive {
+  opacity: 0.55;
+}
+
+.setCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.setCardMeta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.setCardName {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.setActiveBadge {
+  display: inline-block;
+  padding: 2px 8px;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 99px;
+  font-size: 11px;
+  color: #4ade80;
+  font-weight: 600;
+}
+
+.setInactiveBadge {
+  display: inline-block;
+  padding: 2px 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.setCardActions {
+  display: flex;
+  gap: 8px;
+}
+
+.setEditBtn {
+  padding: 5px 14px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.setEditBtn:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.setDeleteBtn {
+  padding: 5px 10px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.setDeleteBtn:hover {
+  color: var(--accent);
+  border-color: rgba(255, 51, 51, 0.4);
+}
+
+.setCardDays {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.dayPill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.dayPillActive {
+  background: rgba(255, 51, 51, 0.12);
+  border-color: rgba(255, 51, 51, 0.3);
+  color: rgba(255, 120, 120, 0.95);
+  font-weight: 600;
+}
+
+.setCardQuestions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.setCardQ {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.setCardQLabel {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  text-transform: uppercase;
+  flex-shrink: 0;
+  width: 18px;
+}
+
+.setCardQText {
+  color: rgba(240, 240, 240, 0.7);
+  flex: 1;
+}
+
+.setCardQCorrect {
+  color: #4ade80;
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+/* ── Set form ── */
+.setForm {
+  border: 1px solid rgba(255, 51, 51, 0.2);
+  border-radius: 12px;
+  padding: 24px;
+  background: rgba(255, 51, 51, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.setFormTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.setFormRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.setFormField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 200px;
+}
+
+.setFormLabel {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.setFormInput {
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.setFormInput:focus {
+  border-color: rgba(255, 51, 51, 0.4);
+}
+
+.setFormInputSmall {
+  max-width: 100px;
+}
+
+.setFormTextarea {
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+  resize: vertical;
+  transition: border-color 0.2s;
+  line-height: 1.6;
+}
+
+.setFormTextarea:focus {
+  border-color: rgba(255, 51, 51, 0.4);
+}
+
+.setFormCheckbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: rgba(240, 240, 240, 0.8);
+  cursor: pointer;
+  white-space: nowrap;
+  padding-bottom: 10px;
+}
+
+.setFormSection {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.setFormSectionTitle {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.daysRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dayCheckLabel {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+}
+
+.dayCheckLabel:hover {
+  border-color: rgba(255, 51, 51, 0.3);
+  color: var(--text);
+}
+
+.dayCheckActive {
+  background: rgba(255, 51, 51, 0.12);
+  border-color: rgba(255, 51, 51, 0.4);
+  color: rgba(255, 120, 120, 0.95);
+  font-weight: 600;
+}
+
+.setFormActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.setCancelBtn {
+  padding: 10px 20px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.setCancelBtn:hover {
+  color: var(--text);
+}
+
+.setSaveBtn {
+  padding: 10px 24px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s;
+}
+
+.setSaveBtn:hover:not(:disabled) {
+  background: #e62a2a;
+}
+
+.setSaveBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

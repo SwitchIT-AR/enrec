@@ -1,12 +1,20 @@
 import { useState, useEffect } from "react";
 import styles from "./Admin.module.css";
 
-const CORRECT_R1 = "3"; // Francisca
-const CORRECT_R2 = "6"; // Mariana Michi
+const CORRECT_R1 = "3"; // fallback para postulaciones sin set
+const CORRECT_R2 = "6";
+
+const DIAS_LABELS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 
 function checkAnswer(answer: string, correct: string) {
-  const num = answer.split("|")[0].trim();
-  return num === correct;
+  return answer.split("|")[0].trim() === correct;
+}
+
+function toEmbedUrl(url: string): string {
+  if (!url) return "";
+  const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+  if (m) return `https://www.youtube.com/embed/${m[1]}`;
+  return url;
 }
 
 type Postulacion = {
@@ -23,82 +31,86 @@ type Postulacion = {
   yt_channel: string | null;
   yt_subscribed_verified: boolean;
   ip_address: string | null;
+  pregunta_set_id: number | null;
   created_at: string;
 };
 
+type PreguntaSet = {
+  id: number;
+  nombre: string;
+  dias: number[];
+  activo: boolean;
+  p1_etiqueta: string;
+  p1_pregunta: string;
+  p1_youtube_url: string;
+  p1_respuesta_correcta: string;
+  p2_etiqueta: string;
+  p2_pregunta: string;
+  p2_youtube_url: string;
+  p2_respuesta_correcta: string;
+};
+
+type SetForm = Omit<PreguntaSet, "id"> & { id?: number };
+
+const emptySetForm = (): SetForm => ({
+  nombre: "",
+  dias: [],
+  activo: true,
+  p1_etiqueta: "",
+  p1_pregunta: "",
+  p1_youtube_url: "",
+  p1_respuesta_correcta: "",
+  p2_etiqueta: "",
+  p2_pregunta: "",
+  p2_youtube_url: "",
+  p2_respuesta_correcta: "",
+});
+
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString("es-AR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
+    day: "2-digit", month: "2-digit", year: "numeric",
+    hour: "2-digit", minute: "2-digit",
   });
-}
-
-function exportCSV(data: Postulacion[]) {
-  const headers = [
-    "ID","Artista","Email","Género","Spotify","YouTube","Instagram",
-    "Descripción","R1 Francisca","R1 OK","R2 Michi","R2 OK",
-    "Canal YT","YT Verificado","IP","Fecha",
-  ];
-  const rows = data.map((p) => [
-    p.id, p.artista, p.email, p.genero, p.spotify ?? "",
-    p.youtube, p.instagram,
-    `"${p.descripcion.replace(/"/g, '""')}"`,
-    `"${p.respuesta1.replace(/"/g, '""')}"`,
-    checkAnswer(p.respuesta1, CORRECT_R1) ? "SI" : "NO",
-    `"${p.respuesta2.replace(/"/g, '""')}"`,
-    checkAnswer(p.respuesta2, CORRECT_R2) ? "SI" : "NO",
-    p.yt_channel ?? "",
-    p.yt_subscribed_verified ? "SI" : "NO",
-    p.ip_address ?? "", formatDate(p.created_at),
-  ]);
-  const csv = [headers, ...rows].map((r) => r.join(",")).join("\n");
-  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `radar-enrec-${new Date().toISOString().slice(0, 10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
 }
 
 export default function Admin() {
   const [token, setToken] = useState(() => sessionStorage.getItem("admin_token") ?? "");
   const [input, setInput] = useState("");
   const [data, setData] = useState<Postulacion[] | null>(null);
+  const [sets, setSets] = useState<PreguntaSet[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [expanded, setExpanded] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<"postulaciones" | "preguntas">("postulaciones");
+  const [editingSet, setEditingSet] = useState<SetForm | null>(null);
+  const [savingSet, setSavingSet] = useState(false);
+  const [setsError, setSetsError] = useState("");
+
+  const authHeaders = (t: string) => ({ Authorization: `Bearer ${t}` });
 
   const fetchData = async (t: string) => {
-    setLoading(true);
-    setError("");
+    setLoading(true); setError("");
     try {
-      const res = await fetch("/api/radar/admin/postulaciones", {
-        headers: { Authorization: `Bearer ${t}` },
-      });
+      const res = await fetch("/api/radar/admin/postulaciones", { headers: authHeaders(t) });
       if (res.status === 401) {
-        setError("Token incorrecto.");
-        setToken("");
-        sessionStorage.removeItem("admin_token");
-        setData(null);
-        return;
+        setError("Token incorrecto."); setToken("");
+        sessionStorage.removeItem("admin_token"); setData(null); return;
       }
-      if (!res.ok) throw new Error("Error del servidor");
-      const json = await res.json();
-      setData(json);
-    } catch {
-      setError("No se pudo conectar con el servidor.");
-      setData(null);
-    } finally {
-      setLoading(false);
-    }
+      if (!res.ok) throw new Error();
+      setData(await res.json());
+    } catch { setError("No se pudo conectar con el servidor."); setData(null); }
+    finally { setLoading(false); }
+  };
+
+  const fetchSets = async (t: string) => {
+    try {
+      const res = await fetch("/api/radar/admin/pregunta-sets", { headers: authHeaders(t) });
+      if (res.ok) setSets(await res.json());
+    } catch { /* silent */ }
   };
 
   useEffect(() => {
-    if (token) fetchData(token);
+    if (token) { fetchData(token); fetchSets(token); }
   }, [token]);
 
   const handleLogin = (e: React.FormEvent) => {
@@ -110,12 +122,98 @@ export default function Admin() {
 
   const handleLogout = () => {
     sessionStorage.removeItem("admin_token");
-    setToken("");
-    setData(null);
-    setInput("");
+    setToken(""); setData(null); setInput(""); setSets([]);
   };
 
-  // ── Login screen ──
+  // ── Respuestas correctas dinámicas por postulación ────────────────────────
+  const getCorrectAnswers = (p: Postulacion) => {
+    if (p.pregunta_set_id != null) {
+      const set = sets.find((s) => s.id === p.pregunta_set_id);
+      if (set) return { r1: set.p1_respuesta_correcta, r2: set.p2_respuesta_correcta, set };
+    }
+    return { r1: CORRECT_R1, r2: CORRECT_R2, set: null };
+  };
+
+  const getSetLabel = (p: Postulacion) => {
+    if (p.pregunta_set_id == null) return null;
+    const set = sets.find((s) => s.id === p.pregunta_set_id);
+    return set ? set.nombre : `Set #${p.pregunta_set_id}`;
+  };
+
+  // ── CSV export ────────────────────────────────────────────────────────────
+  const exportCSV = (rows: Postulacion[]) => {
+    const headers = [
+      "ID","Artista","Email","Género","Spotify","YouTube","Instagram",
+      "Descripción","Set","R1","R1 OK","R2","R2 OK",
+      "Canal YT","YT Verificado","IP","Fecha",
+    ];
+    const csvRows = rows.map((p) => {
+      const { r1, r2 } = getCorrectAnswers(p);
+      return [
+        p.id, p.artista, p.email, p.genero, p.spotify ?? "",
+        p.youtube, p.instagram,
+        `"${p.descripcion.replace(/"/g, '""')}"`,
+        getSetLabel(p) ?? "default",
+        `"${p.respuesta1.replace(/"/g, '""')}"`,
+        checkAnswer(p.respuesta1, r1) ? "SI" : "NO",
+        `"${p.respuesta2.replace(/"/g, '""')}"`,
+        checkAnswer(p.respuesta2, r2) ? "SI" : "NO",
+        p.yt_channel ?? "", p.yt_subscribed_verified ? "SI" : "NO",
+        p.ip_address ?? "", formatDate(p.created_at),
+      ];
+    });
+    const csv = [headers, ...csvRows].map((r) => r.join(",")).join("\n");
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `radar-enrec-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click(); URL.revokeObjectURL(url);
+  };
+
+  // ── Set CRUD ──────────────────────────────────────────────────────────────
+  const saveSet = async () => {
+    if (!editingSet) return;
+    setSavingSet(true); setSetsError("");
+    try {
+      const isNew = !editingSet.id;
+      const url = isNew
+        ? "/api/radar/admin/pregunta-sets"
+        : `/api/radar/admin/pregunta-sets/${editingSet.id}`;
+      const res = await fetch(url, {
+        method: isNew ? "POST" : "PUT",
+        headers: { "Content-Type": "application/json", ...authHeaders(token) },
+        body: JSON.stringify({
+          ...editingSet,
+          p1_youtube_url: toEmbedUrl(editingSet.p1_youtube_url),
+          p2_youtube_url: toEmbedUrl(editingSet.p2_youtube_url),
+        }),
+      });
+      if (!res.ok) { setSetsError("Error al guardar. Revisá los campos."); return; }
+      await fetchSets(token);
+      setEditingSet(null);
+    } catch { setSetsError("Error de conexión."); }
+    finally { setSavingSet(false); }
+  };
+
+  const deleteSet = async (id: number) => {
+    if (!confirm("¿Eliminar este set de preguntas?")) return;
+    await fetch(`/api/radar/admin/pregunta-sets/${id}`, {
+      method: "DELETE", headers: authHeaders(token),
+    });
+    await fetchSets(token);
+    if (editingSet?.id === id) setEditingSet(null);
+  };
+
+  const toggleDay = (day: number) => {
+    if (!editingSet) return;
+    const dias = editingSet.dias ?? [];
+    setEditingSet({
+      ...editingSet,
+      dias: dias.includes(day) ? dias.filter((d) => d !== day) : [...dias, day],
+    });
+  };
+
+  // ── Login screen ──────────────────────────────────────────────────────────
   if (!token) {
     return (
       <div className={styles.loginScreen}>
@@ -123,194 +221,338 @@ export default function Admin() {
           <h1 className={styles.loginTitle}>Admin EN .REC</h1>
           <p className={styles.loginSub}>Radar — Postulaciones</p>
           <input
-            type="password"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Token de acceso"
-            className={styles.loginInput}
-            autoFocus
+            type="password" value={input} onChange={(e) => setInput(e.target.value)}
+            placeholder="Token de acceso" className={styles.loginInput} autoFocus
           />
           {error && <p className={styles.loginError}>{error}</p>}
-          <button type="submit" className={styles.loginBtn}>
-            Ingresar
-          </button>
+          <button type="submit" className={styles.loginBtn}>Ingresar</button>
         </form>
       </div>
     );
   }
 
-  const okCount = data?.filter(
-    (p) => checkAnswer(p.respuesta1, CORRECT_R1) && checkAnswer(p.respuesta2, CORRECT_R2)
-  ).length ?? 0;
+  const okCount = data?.filter((p) => {
+    const { r1, r2 } = getCorrectAnswers(p);
+    return checkAnswer(p.respuesta1, r1) && checkAnswer(p.respuesta2, r2);
+  }).length ?? 0;
 
-  // ── Dashboard ──
+  // ── Dashboard ─────────────────────────────────────────────────────────────
   return (
     <div className={styles.page}>
+      {/* Top bar */}
       <div className={styles.topBar}>
         <div className={styles.topBarLeft}>
           <h1 className={styles.pageTitle}>Radar EN .REC</h1>
-          {data && (
-            <span className={styles.badge}>{data.length} postulación{data.length !== 1 ? "es" : ""}</span>
-          )}
-          {data && okCount > 0 && (
-            <span className={styles.badgeOk}>{okCount} con respuestas correctas ✓</span>
-          )}
+          {data && <span className={styles.badge}>{data.length} postulación{data.length !== 1 ? "es" : ""}</span>}
+          {data && okCount > 0 && <span className={styles.badgeOk}>{okCount} con respuestas correctas ✓</span>}
         </div>
         <div className={styles.topBarRight}>
-          {data && data.length > 0 && (
-            <button className={styles.exportBtn} onClick={() => exportCSV(data)}>
-              Exportar CSV
-            </button>
+          {activeTab === "postulaciones" && data && data.length > 0 && (
+            <button className={styles.exportBtn} onClick={() => exportCSV(data)}>Exportar CSV</button>
           )}
-          <button className={styles.logoutBtn} onClick={handleLogout}>
-            Salir
-          </button>
+          <button className={styles.logoutBtn} onClick={handleLogout}>Salir</button>
         </div>
       </div>
 
-      {loading && <p className={styles.loading}>Cargando...</p>}
-      {error && <p className={styles.errorMsg}>{error}</p>}
+      {/* Tabs */}
+      <div className={styles.tabsBar}>
+        <button
+          className={`${styles.tab} ${activeTab === "postulaciones" ? styles.tabActive : ""}`}
+          onClick={() => setActiveTab("postulaciones")}
+        >
+          Postulaciones
+        </button>
+        <button
+          className={`${styles.tab} ${activeTab === "preguntas" ? styles.tabActive : ""}`}
+          onClick={() => setActiveTab("preguntas")}
+        >
+          Preguntas
+        </button>
+      </div>
 
-      {data && data.length === 0 && (
-        <p className={styles.empty}>Todavía no hay postulaciones.</p>
+      {/* ── Tab: Postulaciones ── */}
+      {activeTab === "postulaciones" && (
+        <>
+          {loading && <p className={styles.loading}>Cargando...</p>}
+          {error && <p className={styles.errorMsg}>{error}</p>}
+          {data && data.length === 0 && <p className={styles.empty}>Todavía no hay postulaciones.</p>}
+          {data && data.length > 0 && (
+            <div className={styles.tableWrap}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Artista / Banda</th>
+                    <th>Género</th>
+                    <th>Email</th>
+                    <th>Instagram</th>
+                    <th>YouTube</th>
+                    <th>Set</th>
+                    <th>P1 R.</th>
+                    <th>P2 R.</th>
+                    <th>Estado</th>
+                    <th>Fecha</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.map((p) => {
+                    const { r1, r2 } = getCorrectAnswers(p);
+                    const r1num = p.respuesta1.split("|")[0].trim();
+                    const r2num = p.respuesta2.split("|")[0].trim();
+                    const r1ok = checkAnswer(p.respuesta1, r1);
+                    const r2ok = checkAnswer(p.respuesta2, r2);
+                    const allOk = r1ok && r2ok;
+                    const noneOk = !r1ok && !r2ok;
+                    const setLabel = getSetLabel(p);
+                    return (
+                      <>
+                        <tr
+                          key={p.id}
+                          className={`${styles.row} ${expanded === p.id ? styles.rowActive : ""} ${allOk ? styles.rowOk : ""}`}
+                          onClick={() => setExpanded(expanded === p.id ? null : p.id)}
+                        >
+                          <td className={styles.idCell}>{p.id}</td>
+                          <td className={styles.artistCell}>{p.artista}</td>
+                          <td>{p.genero}</td>
+                          <td>
+                            <a href={`mailto:${p.email}`} className={styles.link} onClick={(e) => e.stopPropagation()}>
+                              {p.email}
+                            </a>
+                          </td>
+                          <td>
+                            <a href={p.instagram} target="_blank" rel="noopener noreferrer" className={styles.link} onClick={(e) => e.stopPropagation()}>IG ↗</a>
+                          </td>
+                          <td>
+                            <a href={p.youtube} target="_blank" rel="noopener noreferrer" className={styles.link} onClick={(e) => e.stopPropagation()}>YT ↗</a>
+                          </td>
+                          <td className={styles.setLabelCell}>
+                            {setLabel ? <span className={styles.setChip}>{setLabel}</span> : <span className={styles.setChipDefault}>—</span>}
+                          </td>
+                          <td className={styles.answerNumCell}>
+                            <span className={r1ok ? styles.numOk : styles.numWrong}>{r1num || "—"}</span>
+                          </td>
+                          <td className={styles.answerNumCell}>
+                            <span className={r2ok ? styles.numOk : styles.numWrong}>{r2num || "—"}</span>
+                          </td>
+                          <td>
+                            {allOk && <span className={styles.answerBadgeOk}>✓ Correctas</span>}
+                            {!allOk && !noneOk && <span className={styles.answerBadgeHalf}>1/2</span>}
+                            {noneOk && <span className={styles.answerBadgeNone}>✗ Incorrectas</span>}
+                          </td>
+                          <td className={styles.dateCell}>{formatDate(p.created_at)}</td>
+                          <td className={styles.chevron}>{expanded === p.id ? "▲" : "▼"}</td>
+                        </tr>
+
+                        {expanded === p.id && (() => {
+                          const { r1, r2, set } = getCorrectAnswers(p);
+                          const r1ok = checkAnswer(p.respuesta1, r1);
+                          const r2ok = checkAnswer(p.respuesta2, r2);
+                          return (
+                            <tr key={`${p.id}-detail`} className={styles.detailRow}>
+                              <td colSpan={12}>
+                                <div className={styles.detail}>
+                                  <div className={styles.detailGrid}>
+                                    <div className={styles.detailBlock}>
+                                      <span className={styles.detailLabel}>Descripción del proyecto</span>
+                                      <p className={styles.detailText}>{p.descripcion}</p>
+                                    </div>
+                                    <div className={styles.detailBlock}>
+                                      <span className={styles.detailLabel}>Spotify</span>
+                                      <p className={styles.detailText}>
+                                        {p.spotify ? <a href={p.spotify} target="_blank" rel="noopener noreferrer" className={styles.link}>{p.spotify}</a> : "—"}
+                                      </p>
+                                    </div>
+                                    <div className={styles.detailBlock}>
+                                      <span className={styles.detailLabel}>Canal de YouTube declarado</span>
+                                      <p className={styles.detailText}>
+                                        {p.yt_channel ? <a href={`https://youtube.com/${p.yt_channel}`} target="_blank" rel="noopener noreferrer" className={styles.link}>{p.yt_channel}</a> : "—"}
+                                        {" "}
+                                        {p.yt_subscribed_verified
+                                          ? <span className={styles.verifiedBadge}>✓ Suscripción verificada</span>
+                                          : <span className={styles.unverifiedBadge}>Sin verificar</span>}
+                                      </p>
+                                    </div>
+                                    <div className={styles.detailBlock}>
+                                      <span className={styles.detailLabel}>
+                                        P1 — {set?.p1_etiqueta ?? "Francisca"} <em>(correcta: {r1})</em>
+                                      </span>
+                                      <p className={r1ok ? styles.answerOk : styles.answerWrong}>
+                                        {r1ok ? "✓" : "✗"} {p.respuesta1}
+                                      </p>
+                                    </div>
+                                    <div className={styles.detailBlock}>
+                                      <span className={styles.detailLabel}>
+                                        P2 — {set?.p2_etiqueta ?? "Michi"} <em>(correcta: {r2})</em>
+                                      </span>
+                                      <p className={r2ok ? styles.answerOk : styles.answerWrong}>
+                                        {r2ok ? "✓" : "✗"} {p.respuesta2}
+                                      </p>
+                                    </div>
+                                    <div className={styles.detailBlock}>
+                                      <span className={styles.detailLabel}>IP / Fecha</span>
+                                      <p className={styles.detailText}>{p.ip_address ?? "—"} · {formatDate(p.created_at)}</p>
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })()}
+                      </>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
       )}
 
-      {data && data.length > 0 && (
-        <div className={styles.tableWrap}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Artista / Banda</th>
-                <th>Género</th>
-                <th>Email</th>
-                <th>Instagram</th>
-                <th>YouTube</th>
-                <th title="Francisca: ¿cuántas veces aparecen los camarógrafos?">Francisca R.</th>
-                <th title="Michi: ¿cuántos riffs/solos del guitarrista?">Michi R.</th>
-                <th>Estado</th>
-                <th>Fecha</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((p) => {
-                const r1num = p.respuesta1.split("|")[0].trim();
-                const r2num = p.respuesta2.split("|")[0].trim();
-                const r1ok = checkAnswer(p.respuesta1, CORRECT_R1);
-                const r2ok = checkAnswer(p.respuesta2, CORRECT_R2);
-                const allOk = r1ok && r2ok;
-                const noneOk = !r1ok && !r2ok;
-                return (
-                  <>
-                    <tr
-                      key={p.id}
-                      className={`${styles.row} ${expanded === p.id ? styles.rowActive : ""} ${allOk ? styles.rowOk : ""}`}
-                      onClick={() => setExpanded(expanded === p.id ? null : p.id)}
-                    >
-                      <td className={styles.idCell}>{p.id}</td>
-                      <td className={styles.artistCell}>{p.artista}</td>
-                      <td>{p.genero}</td>
-                      <td>
-                        <a href={`mailto:${p.email}`} className={styles.link} onClick={(e) => e.stopPropagation()}>
-                          {p.email}
-                        </a>
-                      </td>
-                      <td>
-                        <a href={p.instagram} target="_blank" rel="noopener noreferrer" className={styles.link} onClick={(e) => e.stopPropagation()}>
-                          IG ↗
-                        </a>
-                      </td>
-                      <td>
-                        <a href={p.youtube} target="_blank" rel="noopener noreferrer" className={styles.link} onClick={(e) => e.stopPropagation()}>
-                          YT ↗
-                        </a>
-                      </td>
-                      <td className={styles.answerNumCell}>
-                        <span className={r1ok ? styles.numOk : styles.numWrong}>
-                          {r1num || "—"}
-                        </span>
-                      </td>
-                      <td className={styles.answerNumCell}>
-                        <span className={r2ok ? styles.numOk : styles.numWrong}>
-                          {r2num || "—"}
-                        </span>
-                      </td>
-                      <td>
-                        {allOk && <span className={styles.answerBadgeOk}>✓ Correctas</span>}
-                        {!allOk && !noneOk && <span className={styles.answerBadgeHalf}>1/2</span>}
-                        {noneOk && <span className={styles.answerBadgeNone}>✗ Incorrectas</span>}
-                      </td>
-                      <td className={styles.dateCell}>{formatDate(p.created_at)}</td>
-                      <td className={styles.chevron}>{expanded === p.id ? "▲" : "▼"}</td>
-                    </tr>
+      {/* ── Tab: Preguntas ── */}
+      {activeTab === "preguntas" && (
+        <div className={styles.setsSection}>
+          <div className={styles.setsHeader}>
+            <p className={styles.setsHint}>
+              Configurá los sets de preguntas y los días en que se muestran en el formulario.
+            </p>
+            <button className={styles.newSetBtn} onClick={() => { setEditingSet(emptySetForm()); setSetsError(""); }}>
+              + Nuevo set
+            </button>
+          </div>
 
-                    {expanded === p.id && (
-                      <tr key={`${p.id}-detail`} className={styles.detailRow}>
-                        <td colSpan={11}>
-                          <div className={styles.detail}>
-                            <div className={styles.detailGrid}>
+          {/* Lista de sets existentes */}
+          {sets.length === 0 && !editingSet && (
+            <p className={styles.empty}>No hay sets configurados. Creá el primero.</p>
+          )}
 
-                              <div className={styles.detailBlock}>
-                                <span className={styles.detailLabel}>Descripción del proyecto</span>
-                                <p className={styles.detailText}>{p.descripcion}</p>
-                              </div>
+          <div className={styles.setsList}>
+            {sets.map((s) => (
+              <div key={s.id} className={`${styles.setCard} ${!s.activo ? styles.setCardInactive : ""}`}>
+                <div className={styles.setCardHeader}>
+                  <div className={styles.setCardMeta}>
+                    <span className={styles.setCardName}>{s.nombre}</span>
+                    {s.activo
+                      ? <span className={styles.setActiveBadge}>Activo</span>
+                      : <span className={styles.setInactiveBadge}>Inactivo</span>}
+                  </div>
+                  <div className={styles.setCardActions}>
+                    <button className={styles.setEditBtn} onClick={() => { setEditingSet({ ...s }); setSetsError(""); }}>Editar</button>
+                    <button className={styles.setDeleteBtn} onClick={() => deleteSet(s.id)}>✕</button>
+                  </div>
+                </div>
+                <div className={styles.setCardDays}>
+                  {DIAS_LABELS.map((label, i) => (
+                    <span key={i} className={`${styles.dayPill} ${s.dias?.includes(i) ? styles.dayPillActive : ""}`}>
+                      {label}
+                    </span>
+                  ))}
+                </div>
+                <div className={styles.setCardQuestions}>
+                  <div className={styles.setCardQ}>
+                    <span className={styles.setCardQLabel}>P1</span>
+                    <span className={styles.setCardQText}>{s.p1_etiqueta || "—"}</span>
+                    <span className={styles.setCardQCorrect}>→ {s.p1_respuesta_correcta}</span>
+                  </div>
+                  <div className={styles.setCardQ}>
+                    <span className={styles.setCardQLabel}>P2</span>
+                    <span className={styles.setCardQText}>{s.p2_etiqueta || "—"}</span>
+                    <span className={styles.setCardQCorrect}>→ {s.p2_respuesta_correcta}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
 
-                              <div className={styles.detailBlock}>
-                                <span className={styles.detailLabel}>Spotify</span>
-                                <p className={styles.detailText}>
-                                  {p.spotify
-                                    ? <a href={p.spotify} target="_blank" rel="noopener noreferrer" className={styles.link}>{p.spotify}</a>
-                                    : "—"}
-                                </p>
-                              </div>
+          {/* Formulario de edición / creación */}
+          {editingSet && (
+            <div className={styles.setForm}>
+              <h3 className={styles.setFormTitle}>{editingSet.id ? "Editar set" : "Nuevo set"}</h3>
 
-                              <div className={styles.detailBlock}>
-                                <span className={styles.detailLabel}>Canal de YouTube declarado</span>
-                                <p className={styles.detailText}>
-                                  {p.yt_channel
-                                    ? <a href={`https://youtube.com/${p.yt_channel}`} target="_blank" rel="noopener noreferrer" className={styles.link}>{p.yt_channel}</a>
-                                    : "—"}
-                                  {" "}
-                                  {p.yt_subscribed_verified
-                                    ? <span className={styles.verifiedBadge}>✓ Suscripción verificada</span>
-                                    : <span className={styles.unverifiedBadge}>Sin verificar</span>}
-                                </p>
-                              </div>
+              <div className={styles.setFormRow}>
+                <div className={styles.setFormField}>
+                  <label className={styles.setFormLabel}>Nombre del set</label>
+                  <input
+                    className={styles.setFormInput}
+                    value={editingSet.nombre}
+                    onChange={(e) => setEditingSet({ ...editingSet, nombre: e.target.value })}
+                    placeholder="Ej: Set A"
+                  />
+                </div>
+                <label className={styles.setFormCheckbox}>
+                  <input
+                    type="checkbox"
+                    checked={editingSet.activo}
+                    onChange={(e) => setEditingSet({ ...editingSet, activo: e.target.checked })}
+                  />
+                  Activo
+                </label>
+              </div>
 
-                              <div className={styles.detailBlock}>
-                                <span className={styles.detailLabel}>
-                                  Pregunta 1 — Sesión Francisca: ¿cuántas veces aparecen los camarógrafos? <em>(correcta: {CORRECT_R1})</em>
-                                </span>
-                                <p className={r1ok ? styles.answerOk : styles.answerWrong}>
-                                  {r1ok ? "✓" : "✗"} {p.respuesta1}
-                                </p>
-                              </div>
+              <div className={styles.setFormField}>
+                <label className={styles.setFormLabel}>Días activos</label>
+                <div className={styles.daysRow}>
+                  {DIAS_LABELS.map((label, i) => (
+                    <label key={i} className={`${styles.dayCheckLabel} ${editingSet.dias?.includes(i) ? styles.dayCheckActive : ""}`}>
+                      <input type="checkbox" checked={editingSet.dias?.includes(i) ?? false} onChange={() => toggleDay(i)} style={{ display: "none" }} />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              </div>
 
-                              <div className={styles.detailBlock}>
-                                <span className={styles.detailLabel}>
-                                  Pregunta 2 — Sesión Michi: ¿cuántos riffs/solos del guitarrista? <em>(correcta: {CORRECT_R2})</em>
-                                </span>
-                                <p className={r2ok ? styles.answerOk : styles.answerWrong}>
-                                  {r2ok ? "✓" : "✗"} {p.respuesta2}
-                                </p>
-                              </div>
+              {/* Pregunta 1 */}
+              <div className={styles.setFormSection}>
+                <h4 className={styles.setFormSectionTitle}>Pregunta 1</h4>
+                <div className={styles.setFormField}>
+                  <label className={styles.setFormLabel}>Etiqueta / título del video</label>
+                  <input className={styles.setFormInput} value={editingSet.p1_etiqueta ?? ""} onChange={(e) => setEditingSet({ ...editingSet, p1_etiqueta: e.target.value })} placeholder="Ej: Sesión #7 — Francisca y Los Exploradores" />
+                </div>
+                <div className={styles.setFormField}>
+                  <label className={styles.setFormLabel}>URL del video de YouTube</label>
+                  <input className={styles.setFormInput} value={editingSet.p1_youtube_url} onChange={(e) => setEditingSet({ ...editingSet, p1_youtube_url: e.target.value })} placeholder="https://www.youtube.com/watch?v=... o embed URL" />
+                </div>
+                <div className={styles.setFormField}>
+                  <label className={styles.setFormLabel}>Texto de la pregunta</label>
+                  <textarea className={styles.setFormTextarea} value={editingSet.p1_pregunta} onChange={(e) => setEditingSet({ ...editingSet, p1_pregunta: e.target.value })} rows={3} placeholder="¿Cuántas veces...?" />
+                </div>
+                <div className={styles.setFormField}>
+                  <label className={styles.setFormLabel}>Respuesta correcta (número)</label>
+                  <input className={`${styles.setFormInput} ${styles.setFormInputSmall}`} value={editingSet.p1_respuesta_correcta} onChange={(e) => setEditingSet({ ...editingSet, p1_respuesta_correcta: e.target.value })} placeholder="3" />
+                </div>
+              </div>
 
-                              <div className={styles.detailBlock}>
-                                <span className={styles.detailLabel}>IP / Fecha</span>
-                                <p className={styles.detailText}>{p.ip_address ?? "—"} · {formatDate(p.created_at)}</p>
-                              </div>
+              {/* Pregunta 2 */}
+              <div className={styles.setFormSection}>
+                <h4 className={styles.setFormSectionTitle}>Pregunta 2</h4>
+                <div className={styles.setFormField}>
+                  <label className={styles.setFormLabel}>Etiqueta / título del video</label>
+                  <input className={styles.setFormInput} value={editingSet.p2_etiqueta ?? ""} onChange={(e) => setEditingSet({ ...editingSet, p2_etiqueta: e.target.value })} placeholder="Ej: Sesión #8 — Mariana Michi" />
+                </div>
+                <div className={styles.setFormField}>
+                  <label className={styles.setFormLabel}>URL del video de YouTube</label>
+                  <input className={styles.setFormInput} value={editingSet.p2_youtube_url} onChange={(e) => setEditingSet({ ...editingSet, p2_youtube_url: e.target.value })} placeholder="https://www.youtube.com/watch?v=... o embed URL" />
+                </div>
+                <div className={styles.setFormField}>
+                  <label className={styles.setFormLabel}>Texto de la pregunta</label>
+                  <textarea className={styles.setFormTextarea} value={editingSet.p2_pregunta} onChange={(e) => setEditingSet({ ...editingSet, p2_pregunta: e.target.value })} rows={3} placeholder="¿Cuántos riffs...?" />
+                </div>
+                <div className={styles.setFormField}>
+                  <label className={styles.setFormLabel}>Respuesta correcta (número)</label>
+                  <input className={`${styles.setFormInput} ${styles.setFormInputSmall}`} value={editingSet.p2_respuesta_correcta} onChange={(e) => setEditingSet({ ...editingSet, p2_respuesta_correcta: e.target.value })} placeholder="6" />
+                </div>
+              </div>
 
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </>
-                );
-              })}
-            </tbody>
-          </table>
+              {setsError && <p className={styles.errorMsg}>{setsError}</p>}
+
+              <div className={styles.setFormActions}>
+                <button className={styles.setCancelBtn} onClick={() => { setEditingSet(null); setSetsError(""); }}>Cancelar</button>
+                <button className={styles.setSaveBtn} onClick={saveSet} disabled={savingSet}>
+                  {savingSet ? "Guardando..." : "Guardar set"}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

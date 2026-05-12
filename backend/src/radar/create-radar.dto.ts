@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsNumber, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class CreateRadarDto {
   @IsString()
@@ -49,4 +49,8 @@ export class CreateRadarDto {
 
   @IsOptional()
   ytSubscribedVerified?: boolean;
+
+  @IsNumber()
+  @IsOptional()
+  preguntaSetId?: number;
 }
