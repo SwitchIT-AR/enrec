@@ -166,11 +166,8 @@ export default function Admin() {
 
   const fetchGa4 = async (t: string) => {
     try {
-      const res = await fetch("/api/radar/admin/ga4-realtime", { headers: authHeaders(t) });
-      if (res.ok) {
-        const json = await res.json();
-        if (!json.error) setGa4(json);
-      }
+      const res = await fetch("/api/radar/admin/realtime", { headers: authHeaders(t) });
+      if (res.ok) setGa4(await res.json());
     } catch { /* silent */ }
   };
 

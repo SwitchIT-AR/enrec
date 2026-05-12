@@ -11,6 +11,11 @@ export default function App() {
 
   useEffect(() => {
     gtmPush({ event: "page_view", page_path: location.pathname });
+    fetch("/api/radar/track", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path: location.pathname }),
+    }).catch(() => {});
   }, [location.pathname]);
 
   return (

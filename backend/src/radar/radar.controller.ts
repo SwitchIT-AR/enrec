@@ -18,12 +18,14 @@ import { ConfigService } from '@nestjs/config';
 import { CreateRadarDto } from './create-radar.dto';
 import { PreguntaSetDto } from './pregunta-set.dto';
 import { RadarService } from './radar.service';
+import { TrackingService } from './tracking.service';
 
 @Controller('api/radar')
 export class RadarController {
   constructor(
     private readonly service: RadarService,
     private readonly config: ConfigService,
+    private readonly tracking: TrackingService,
   ) {}
 
   private checkAdmin(auth: string): void {
@@ -31,6 +33,22 @@ export class RadarController {
     const expected = this.config.get<string>('ADMIN_TOKEN', '');
     if (!token || token !== expected) throw new UnauthorizedException('Token inválido');
   }
+
+  // ── Tracking de visitas ───────────────────────────────────────────────────
+
+  @Post('track')
+  @HttpCode(204)
+  trackVisit(@Body('path') path: string) {
+    if (path) this.tracking.record(path);
+  }
+
+  @Get('admin/realtime')
+  getRealtime(@Headers('authorization') auth: string) {
+    this.checkAdmin(auth);
+    return this.tracking.getStats();
+  }
+
+  // ── Formulario público ────────────────────────────────────────────────────
 
   @Post()
   @HttpCode(200)
@@ -72,12 +90,6 @@ export class RadarController {
   ) {
     this.checkAdmin(auth);
     await this.service.deletePostulacion(id);
-  }
-
-  @Get('admin/ga4-realtime')
-  async getGa4Realtime(@Headers('authorization') auth: string) {
-    this.checkAdmin(auth);
-    return this.service.getGa4RealtimeStats();
   }
 
   @Get('admin/youtube-stats')
