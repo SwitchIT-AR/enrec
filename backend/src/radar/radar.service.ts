@@ -223,7 +223,7 @@ export class RadarService {
     }
   }
 
-  async getGa4Stats(): Promise<Record<string, unknown>> {
+  async getGa4RealtimeStats(): Promise<Record<string, unknown>> {
     const credPath = this.config.get<string>('GOOGLE_CREDENTIALS_PATH');
     const propertyId = this.config.get<string>('GA4_PROPERTY_ID');
     if (!credPath || !propertyId) return { error: 'no_config' };
@@ -232,22 +232,14 @@ export class RadarService {
       const creds = JSON.parse(fs.readFileSync(credPath, 'utf8'));
       const token = await this.getGoogleAccessToken(creds);
 
+      // Real-time report: usuarios activos en los últimos 30 minutos por página
       const body = {
-        dateRanges: [{ startDate: 'today', endDate: 'today' }],
         dimensions: [{ name: 'pagePath' }],
-        metrics: [{ name: 'screenPageViews' }, { name: 'activeUsers' }],
-        dimensionFilter: {
-          orGroup: {
-            expressions: [
-              { filter: { fieldName: 'pagePath', stringFilter: { value: '/', matchType: 'EXACT' } } },
-              { filter: { fieldName: 'pagePath', stringFilter: { value: '/radar', matchType: 'EXACT' } } },
-            ],
-          },
-        },
+        metrics: [{ name: 'activeUsers' }],
       };
 
       const res = await fetch(
-        `https://analyticsdata.googleapis.com/v1beta/properties/${propertyId}:runReport`,
+        `https://analyticsdata.googleapis.com/v1beta/properties/${propertyId}:runRealtimeReport`,
         {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -256,17 +248,17 @@ export class RadarService {
       );
       const data = await res.json();
 
-      const result: Record<string, { views: number; users: number }> = { '/': { views: 0, users: 0 }, '/radar': { views: 0, users: 0 } };
+      const pages: Record<string, number> = {};
+      let total = 0;
       for (const row of data.rows ?? []) {
         const path = row.dimensionValues?.[0]?.value as string;
-        if (result[path]) {
-          result[path].views = parseInt(row.metricValues?.[0]?.value ?? '0', 10);
-          result[path].users = parseInt(row.metricValues?.[1]?.value ?? '0', 10);
-        }
+        const users = parseInt(row.metricValues?.[0]?.value ?? '0', 10);
+        pages[path] = users;
+        total += users;
       }
-      return result;
+      return { total, pages };
     } catch (e) {
-      this.logger.error('GA4 stats error', e);
+      this.logger.error('GA4 realtime error', e);
       return { error: 'fetch_error' };
     }
   }

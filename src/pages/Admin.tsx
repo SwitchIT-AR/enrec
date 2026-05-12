@@ -104,7 +104,7 @@ export default function Admin() {
   const [setsError, setSetsError] = useState("");
   const [ytStats, setYtStats] = useState<Youtubestat[] | null>(null);
   const [ytLoading, setYtLoading] = useState(false);
-  const [ga4Stats, setGa4Stats] = useState<Record<string, { views: number; users: number }> | null>(null);
+  const [ga4, setGa4] = useState<{ total: number; pages: Record<string, number> } | null>(null);
 
   const authHeaders = (t: string) => ({ Authorization: `Bearer ${t}` });
 
@@ -138,18 +138,21 @@ export default function Admin() {
     finally { setYtLoading(false); }
   };
 
-  const fetchGa4Stats = async (t: string) => {
+  const fetchGa4 = async (t: string) => {
     try {
-      const res = await fetch("/api/radar/admin/ga4-stats", { headers: authHeaders(t) });
+      const res = await fetch("/api/radar/admin/ga4-realtime", { headers: authHeaders(t) });
       if (res.ok) {
         const json = await res.json();
-        if (!json.error) setGa4Stats(json);
+        if (!json.error) setGa4(json);
       }
     } catch { /* silent */ }
   };
 
   useEffect(() => {
-    if (token) { fetchData(token); fetchSets(token); fetchYtStats(token); fetchGa4Stats(token); }
+    if (!token) return;
+    fetchData(token); fetchSets(token); fetchYtStats(token); fetchGa4(token);
+    const interval = setInterval(() => fetchGa4(token), 30000);
+    return () => clearInterval(interval);
   }, [token]);
 
   const handleLogin = (e: React.FormEvent) => {
@@ -302,6 +305,34 @@ export default function Admin() {
           <button className={styles.logoutBtn} onClick={handleLogout}>Salir</button>
         </div>
       </div>
+
+      {/* ── Cards permanentes — siempre visibles ── */}
+      {data && (() => {
+        const total = data.length;
+        const bothOk = data.filter((p) => { const { r1, r2 } = getCorrectAnswers(p); return checkAnswer(p.respuesta1, r1) && checkAnswer(p.respuesta2, r2); }).length;
+        const oneOk  = data.filter((p) => { const { r1, r2 } = getCorrectAnswers(p); const a = checkAnswer(p.respuesta1, r1); const b = checkAnswer(p.respuesta2, r2); return (a && !b) || (!a && b); }).length;
+        const noneOk = data.filter((p) => { const { r1, r2 } = getCorrectAnswers(p); return !checkAnswer(p.respuesta1, r1) && !checkAnswer(p.respuesta2, r2); }).length;
+        return (
+          <div className={styles.permanentCards}>
+            <div className={styles.statCard}><span className={styles.statNum}>{total}</span><span className={styles.statLabel}>Inscriptos</span></div>
+            <div className={`${styles.statCard} ${styles.statCardOk}`}><span className={styles.statNum}>{bothOk}</span><span className={styles.statLabel}>Ambas correctas</span></div>
+            <div className={`${styles.statCard} ${styles.statCardHalf}`}><span className={styles.statNum}>{oneOk}</span><span className={styles.statLabel}>Una correcta</span></div>
+            <div className={`${styles.statCard} ${styles.statCardNone}`}><span className={styles.statNum}>{noneOk}</span><span className={styles.statLabel}>Ninguna correcta</span></div>
+            <div className={`${styles.statCard} ${styles.statCardLive}`}>
+              <span className={styles.statNum}>{ga4 ? ga4.total : "—"}</span>
+              <span className={styles.statLabel}>🔴 Usuarios ahora</span>
+            </div>
+            <div className={styles.statCard}>
+              <span className={styles.statNum}>{ga4 ? (ga4.pages["/"] ?? 0) : "—"}</span>
+              <span className={styles.statLabel}>🔴 En Home ahora</span>
+            </div>
+            <div className={`${styles.statCard} ${styles.statCardOk}`}>
+              <span className={styles.statNum}>{ga4 ? (ga4.pages["/radar"] ?? 0) : "—"}</span>
+              <span className={styles.statLabel}>🔴 En /radar ahora</span>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Tabs */}
       <div className={styles.tabsBar}>
@@ -686,93 +717,67 @@ export default function Admin() {
       {/* ── Tab: Estadísticas ── */}
       {activeTab === "estadisticas" && (
         <div className={styles.statsSection}>
-
-          {/* Cards GA4 — tráfico hoy */}
-          {ga4Stats && (
-            <div className={styles.ga4Block}>
-              <h3 className={styles.ytStatsTitle}>Tráfico hoy</h3>
-              <div className={styles.statsCards}>
-                <div className={styles.statCard}>
-                  <span className={styles.statNum}>{ga4Stats["/"]?.views ?? 0}</span>
-                  <span className={styles.statLabel}>Vistas en Home hoy</span>
-                </div>
-                <div className={styles.statCard}>
-                  <span className={styles.statNum}>{ga4Stats["/"]?.users ?? 0}</span>
-                  <span className={styles.statLabel}>Usuarios activos en Home</span>
-                </div>
-                <div className={`${styles.statCard} ${styles.statCardOk}`}>
-                  <span className={styles.statNum}>{ga4Stats["/radar"]?.views ?? 0}</span>
-                  <span className={styles.statLabel}>Vistas en /radar hoy</span>
-                </div>
-                <div className={`${styles.statCard} ${styles.statCardOk}`}>
-                  <span className={styles.statNum}>{ga4Stats["/radar"]?.users ?? 0}</span>
-                  <span className={styles.statLabel}>Usuarios activos en /radar</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Cards de inscriptos */}
-          {data && (() => {
-            const total = data.length;
-            const bothOk = data.filter((p) => { const { r1, r2 } = getCorrectAnswers(p); return checkAnswer(p.respuesta1, r1) && checkAnswer(p.respuesta2, r2); }).length;
-            const oneOk  = data.filter((p) => { const { r1, r2 } = getCorrectAnswers(p); const a = checkAnswer(p.respuesta1, r1); const b = checkAnswer(p.respuesta2, r2); return (a && !b) || (!a && b); }).length;
-            const noneOk = data.filter((p) => { const { r1, r2 } = getCorrectAnswers(p); return !checkAnswer(p.respuesta1, r1) && !checkAnswer(p.respuesta2, r2); }).length;
-            return (
-              <div className={styles.statsCards}>
-                <div className={styles.statCard}>
-                  <span className={styles.statNum}>{total}</span>
-                  <span className={styles.statLabel}>Inscriptos totales</span>
-                </div>
-                <div className={`${styles.statCard} ${styles.statCardOk}`}>
-                  <span className={styles.statNum}>{bothOk}</span>
-                  <span className={styles.statLabel}>Ambas respuestas correctas</span>
-                </div>
-                <div className={`${styles.statCard} ${styles.statCardHalf}`}>
-                  <span className={styles.statNum}>{oneOk}</span>
-                  <span className={styles.statLabel}>Solo una correcta</span>
-                </div>
-                <div className={`${styles.statCard} ${styles.statCardNone}`}>
-                  <span className={styles.statNum}>{noneOk}</span>
-                  <span className={styles.statLabel}>Ninguna correcta</span>
-                </div>
-              </div>
-            );
-          })()}
-
-          {/* YouTube stats */}
           <div className={styles.ytStatsSection}>
             <h3 className={styles.ytStatsTitle}>Sesiones EN .REC — Views en YouTube</h3>
             {ytLoading && <p className={styles.loading}>Cargando datos de YouTube...</p>}
             {ytStats && (() => {
-              const totalViews = ytStats.reduce((acc, s) => acc + (s.viewCount ?? 0), 0);
               const sorted = [...ytStats].sort((a, b) => (b.viewCount ?? 0) - (a.viewCount ?? 0));
+              const totalViews = sorted.reduce((acc, s) => acc + (s.viewCount ?? 0), 0);
+              const maxViews = sorted[0]?.viewCount ?? 1;
               return (
                 <>
                   <p className={styles.ytTotalViews}>
                     Total acumulado: <strong>{totalViews.toLocaleString("es-AR")}</strong> reproducciones
                   </p>
-                  <div className={styles.ytGrid}>
-                    {sorted.map((s) => (
-                      <a
-                        key={s.videoId}
-                        href={`https://www.youtube.com/watch?v=${s.videoId}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={styles.ytCard}
-                      >
-                        {s.thumbnail && <img src={s.thumbnail} alt={s.nombre} className={styles.ytThumb} />}
-                        <div className={styles.ytCardBody}>
-                          <span className={styles.ytCardName}>{s.nombre}</span>
-                          <span className={styles.ytCardViews}>{(s.viewCount ?? 0).toLocaleString("es-AR")} views</span>
-                          <div className={styles.ytCardMeta}>
-                            <span>👍 {(s.likeCount ?? 0).toLocaleString("es-AR")}</span>
-                            <span>💬 {(s.commentCount ?? 0).toLocaleString("es-AR")}</span>
-                            {s.publishedAt && <span>{new Date(s.publishedAt).toLocaleDateString("es-AR", { month: "short", year: "numeric" })}</span>}
-                          </div>
-                        </div>
-                      </a>
-                    ))}
+
+                  {/* Gráfico de barras SVG */}
+                  <div className={styles.chartWrap}>
+                    <svg width="100%" height={sorted.length * 36 + 16} className={styles.barChart}>
+                      {sorted.map((s, i) => {
+                        const barW = Math.max(4, (s.viewCount / maxViews) * 70);
+                        const y = i * 36 + 8;
+                        return (
+                          <g key={s.videoId}>
+                            <text x="0" y={y + 13} className={styles.barLabel} fill="rgba(240,240,240,0.55)" fontSize="11">{s.nombre}</text>
+                            <rect x="180" y={y} height="20" width={`${barW}%`} rx="3" fill="var(--accent)" opacity="0.85" />
+                            <text x={`calc(${barW}% + 186px)`} y={y + 14} fill="rgba(240,240,240,0.7)" fontSize="11">{(s.viewCount ?? 0).toLocaleString("es-AR")}</text>
+                          </g>
+                        );
+                      })}
+                    </svg>
+                  </div>
+
+                  {/* Tabla */}
+                  <div className={styles.tableWrap}>
+                    <table className={styles.table}>
+                      <thead>
+                        <tr>
+                          <th>Artista</th>
+                          <th style={{ textAlign: "right" }}>Views</th>
+                          <th style={{ textAlign: "right" }}>👍 Likes</th>
+                          <th style={{ textAlign: "right" }}>💬 Coment.</th>
+                          <th>Publicado</th>
+                          <th></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {sorted.map((s) => (
+                          <tr key={s.videoId} className={styles.row}>
+                            <td className={styles.artistCell}>{s.nombre}</td>
+                            <td style={{ textAlign: "right", fontWeight: 700, color: "var(--accent)" }}>{(s.viewCount ?? 0).toLocaleString("es-AR")}</td>
+                            <td style={{ textAlign: "right" }}>{(s.likeCount ?? 0).toLocaleString("es-AR")}</td>
+                            <td style={{ textAlign: "right" }}>{(s.commentCount ?? 0).toLocaleString("es-AR")}</td>
+                            <td className={styles.dateCell}>{s.publishedAt ? new Date(s.publishedAt).toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" }) : "—"}</td>
+                            <td><a href={`https://www.youtube.com/watch?v=${s.videoId}`} target="_blank" rel="noopener noreferrer" className={styles.link}>YT ↗</a></td>
+                          </tr>
+                        ))}
+                        <tr className={styles.row} style={{ borderTop: "2px solid var(--border)" }}>
+                          <td className={styles.artistCell}>TOTAL</td>
+                          <td style={{ textAlign: "right", fontWeight: 700, color: "var(--accent)" }}>{totalViews.toLocaleString("es-AR")}</td>
+                          <td colSpan={4}></td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
                 </>
               );
