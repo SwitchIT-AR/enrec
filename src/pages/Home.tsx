@@ -3,41 +3,25 @@ import { Link } from "react-router-dom";
 import { Modal } from "@mantine/core";
 import styles from "./Home.module.css";
 
-import francisca from "../assets/francisca.jpg";
-import francisca1 from "../assets/francisca1.jpg";
-import jjulian from "../assets/jjjulian.jpg";
 import logo from "../assets/logo-enrec.png";
-import luaso from "../assets/luaso.jpg";
-import luasogral from "../assets/luasogral.jpg";
-import martu from "../assets/martu.jpg";
-import mina from "../assets/mina.jpg";
-import motel from "../assets/motel.jpg";
-import palmitos from "../assets/palmitos.jpg";
 
-// ── Reemplazar con los IDs reales de YouTube ───────────────────────────────
 const FEATURED = [
-  {
-    ytId: "3u0bbataius",
-    artist: "Manu Martínez",
-    label: "Última sesión",
-  },
-  {
-    ytId: "__KGJ4_HmgY",
-    artist: "Mariana Michi",
-    label: "Sesión #8",
-  },
+  { ytId: "3u0bbataius", artist: "Manu Martínez", label: "Última sesión" },
+  { ytId: "__KGJ4_HmgY", artist: "Mariana Michi", label: "Sesión #8" },
 ];
 
-const sessions = [
-  { src: francisca, url: "", label: "Francisca y Los Exploradores" },
-  { src: motel, url: "https://www.youtube.com/embed/nTQM4gD68Yo", label: "Motel" },
-  { src: martu, url: "https://www.youtube.com/embed/BZivQ-XM7tI", label: "Martu" },
-  { src: luaso, url: "https://www.youtube.com/embed/yEq3rOBf0SM", label: "Luaso" },
-  { src: luasogral, url: "", isCenter: true, label: "" },
-  { src: francisca1, url: "", label: "Francisca y Los Exploradores #2" },
-  { src: mina, url: "https://www.youtube.com/embed/kLsmlObEMUk", label: "Mina" },
-  { src: jjulian, url: "https://www.youtube.com/embed/jngaRABfN50", label: "J. Julian" },
-  { src: palmitos, url: "https://www.youtube.com/embed/qXqajLd4YHI", label: "Palmitos Park" },
+const ALL_SESSIONS = [
+  { nombre: "Manu Martínez", videoId: "3u0bbataius" },
+  { nombre: "Mariana Michi", videoId: "__KGJ4_HmgY" },
+  { nombre: "Fepo Cambiasso", videoId: "zNRcYUV6ZdE" },
+  { nombre: "Coval", videoId: "3CRVIZJU8F8" },
+  { nombre: "Francisca y Los Exploradores", videoId: "4GrL1ccJ3mo" },
+  { nombre: "Luaso", videoId: "yEq3rOBf0SM" },
+  { nombre: "Martu Brito", videoId: "BZivQ-XM7tI" },
+  { nombre: "Motel", videoId: "nTQM4gD68Yo" },
+  { nombre: "JJJulian", videoId: "jngaRABfN50" },
+  { nombre: "Mina", videoId: "kLsmlObEMUk" },
+  { nombre: "Los Palmos", videoId: "qXqajLd4YHI" },
 ];
 
 const socials = [
@@ -59,11 +43,6 @@ export default function Home() {
   const openVideo = (embedUrl: string) => {
     setVideoUrl(embedUrl);
     setOpened(true);
-  };
-
-  const handleGridClick = (item: { url: string; isCenter?: boolean }) => {
-    if (!item.url || item.isCenter) return;
-    openVideo(item.url);
   };
 
   return (
@@ -162,29 +141,31 @@ export default function Home() {
       <section className={styles.sessions} id="sesiones">
         <div className={styles.sectionHeader}>
           <h2 className={styles.sectionTitle}>Sesiones</h2>
-          <p className={styles.sectionSub}>Hacé click en cada imagen para ver el video</p>
         </div>
-
-        <div className={styles.grid}>
-          {sessions.map((item, idx) => (
-            <div
-              key={idx}
-              className={`${styles.cell} ${item.url && !item.isCenter ? styles.clickable : ""}`}
-              onClick={() => handleGridClick(item)}
+        <div className={styles.ytGrid}>
+          {ALL_SESSIONS.map((s) => (
+            <button
+              key={s.videoId}
+              className={styles.ytCard}
+              onClick={() => openVideo(`https://www.youtube.com/embed/${s.videoId}?autoplay=1`)}
             >
-              <img src={item.src} alt={item.label} className={styles.cellImg} />
-              <div className={styles.cellOverlay} />
-              {item.isCenter && (
-                <img src={logo} alt="EN .REC" className={styles.centerLogo} />
-              )}
-              {item.url && !item.isCenter && (
-                <div className={styles.playIcon}>
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
+              <div className={styles.ytThumb}>
+                <img
+                  src={`https://img.youtube.com/vi/${s.videoId}/hqdefault.jpg`}
+                  alt={s.nombre}
+                  className={styles.ytThumbImg}
+                />
+                <div className={styles.ytPlayOverlay}>
+                  <svg width="44" height="44" viewBox="0 0 24 24" fill="white">
                     <path d="M8 5v14l11-7z" />
                   </svg>
                 </div>
-              )}
-            </div>
+              </div>
+              <div className={styles.ytCardInfo}>
+                <p className={styles.ytCardTitle}>{s.nombre}</p>
+                <p className={styles.ytCardSub}>Sesión EN .REC</p>
+              </div>
+            </button>
           ))}
         </div>
       </section>

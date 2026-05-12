@@ -17,36 +17,15 @@
 }
 
 .title {
-  font-size: clamp(28px, 5vw, 42px);
+  font-size: clamp(36px, 6vw, 56px);
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
   margin: 0 0 16px;
   line-height: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
 }
 
-.titleTop {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  line-height: 1;
-}
-
-.titleLogo {
-  height: 72px;
-  width: auto;
-  display: block;
-  opacity: 0.9;
-}
-
-.radarIcon {
-  width: 1.15em;
-  height: 1.15em;
+.titleBrand {
   color: var(--accent);
-  flex-shrink: 0;
 }
 
 .subtitle {
