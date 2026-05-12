@@ -43,7 +43,9 @@ type FormData = {
   instagram: string;
   descripcion: string;
   respuesta1: string;
+  respuesta1Comment: string;
   respuesta2: string;
+  respuesta2Comment: string;
   ytChannel: string;
   tyc: boolean;
 };
@@ -59,7 +61,9 @@ const initialData: FormData = {
   instagram: "",
   descripcion: "",
   respuesta1: "",
+  respuesta1Comment: "",
   respuesta2: "",
+  respuesta2Comment: "",
   ytChannel: "",
   tyc: false,
 };
@@ -76,8 +80,8 @@ function validate(data: FormData, verifyStatus: VerifyStatus): Errors {
   if (!data.youtube.trim()) errs.youtube = "Requerido";
   if (!data.instagram.trim()) errs.instagram = "Requerido";
   if (!data.descripcion.trim()) errs.descripcion = "Requerido";
-  if (!data.respuesta1.trim()) errs.respuesta1 = "Requerido";
-  if (!data.respuesta2.trim()) errs.respuesta2 = "Requerido";
+  if (!data.respuesta1.trim() || isNaN(Number(data.respuesta1))) errs.respuesta1 = "Ingresá un número";
+  if (!data.respuesta2.trim() || isNaN(Number(data.respuesta2))) errs.respuesta2 = "Ingresá un número";
 
   // Validación de suscripción
   if (!data.ytChannel.trim()) {
@@ -169,8 +173,8 @@ export default function Radar() {
       youtube:              form.youtube,
       instagram:            form.instagram,
       descripcion:          form.descripcion,
-      respuesta1:           form.respuesta1,
-      respuesta2:           form.respuesta2,
+      respuesta1:           form.respuesta1 + (form.respuesta1Comment.trim() ? ` | ${form.respuesta1Comment.trim()}` : ""),
+      respuesta2:           form.respuesta2 + (form.respuesta2Comment.trim() ? ` | ${form.respuesta2Comment.trim()}` : ""),
       ytChannel:            form.ytChannel,
       ytSubscribedVerified: verifyStatus === "verified",
     };
@@ -367,13 +371,24 @@ export default function Radar() {
                   camarógrafos filmando... ¿cuántas veces aparecen en cámara?{" "}
                   <span className={styles.req}>*</span>
                 </label>
-                <input
-                  name="respuesta1"
-                  value={form.respuesta1}
-                  onChange={handleChange}
-                  className={`${styles.input} ${errors.respuesta1 ? styles.inputError : ""}`}
-                  placeholder="Tu respuesta..."
-                />
+                <div className={styles.answerRow}>
+                  <input
+                    type="number"
+                    name="respuesta1"
+                    value={form.respuesta1}
+                    onChange={handleChange}
+                    min="0"
+                    className={`${styles.inputNum} ${errors.respuesta1 ? styles.inputError : ""}`}
+                    placeholder="Número"
+                  />
+                  <input
+                    name="respuesta1Comment"
+                    value={form.respuesta1Comment}
+                    onChange={handleChange}
+                    className={styles.inputComment}
+                    placeholder="Comentario opcional..."
+                  />
+                </div>
                 {errors.respuesta1 && <p className={styles.error}>{errors.respuesta1}</p>}
               </div>
             </div>
@@ -385,7 +400,7 @@ export default function Radar() {
               </p>
               <div className={styles.embedWrapper}>
                 <iframe
-                  src="https://www.youtube.com/embed/KGJ4_HmgY"
+                  src="https://www.youtube.com/embed/__KGJ4_HmgY"
                   title="Mariana Michi - Sesión #8 EN .REC"
                   style={{ border: "none" }}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -397,13 +412,24 @@ export default function Radar() {
                 <label className={styles.label}>
                   ¿Cuántos riffs y/o solos toca el guitarrista a lo largo de la sesión? Momentos instrumentales donde Mariana no canta. <span className={styles.req}>*</span>
                 </label>
-                <input
-                  name="respuesta2"
-                  value={form.respuesta2}
-                  onChange={handleChange}
-                  className={`${styles.input} ${errors.respuesta2 ? styles.inputError : ""}`}
-                  placeholder="Tu respuesta..."
-                />
+                <div className={styles.answerRow}>
+                  <input
+                    type="number"
+                    name="respuesta2"
+                    value={form.respuesta2}
+                    onChange={handleChange}
+                    min="0"
+                    className={`${styles.inputNum} ${errors.respuesta2 ? styles.inputError : ""}`}
+                    placeholder="Número"
+                  />
+                  <input
+                    name="respuesta2Comment"
+                    value={form.respuesta2Comment}
+                    onChange={handleChange}
+                    className={styles.inputComment}
+                    placeholder="Comentario opcional..."
+                  />
+                </div>
                 {errors.respuesta2 && <p className={styles.error}>{errors.respuesta2}</p>}
               </div>
             </div>

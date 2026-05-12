@@ -128,6 +128,57 @@
   border-color: var(--accent) !important;
 }
 
+.answerRow {
+  display: flex;
+  gap: 10px;
+}
+
+.inputNum {
+  width: 100px;
+  flex-shrink: 0;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+  text-align: center;
+}
+
+.inputNum:focus {
+  border-color: rgba(255, 51, 51, 0.5);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.inputNum::placeholder {
+  color: rgba(240, 240, 240, 0.25);
+}
+
+.inputComment {
+  flex: 1;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.inputComment:focus {
+  border-color: rgba(255, 51, 51, 0.5);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.inputComment::placeholder {
+  color: rgba(240, 240, 240, 0.25);
+}
+
 .error {
   margin: 0;
   font-size: 12px;

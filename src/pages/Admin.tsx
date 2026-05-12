@@ -5,7 +5,8 @@ const CORRECT_R1 = "3"; // Francisca
 const CORRECT_R2 = "6"; // Mariana Michi
 
 function checkAnswer(answer: string, correct: string) {
-  return answer.trim().toLowerCase() === correct.toLowerCase();
+  const num = answer.split("|")[0].trim();
+  return num === correct;
 }
 
 type Postulacion = {
