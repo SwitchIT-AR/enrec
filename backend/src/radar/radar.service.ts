@@ -4,14 +4,14 @@ import { YoutubeBaseline } from './youtube-baseline.entity';
 const SESSIONS = [
   { nombre: 'Manu Martínez', videoId: '3u0bbataius' },
   { nombre: 'Mariana Michi', videoId: '__KGJ4_HmgY' },
-  { nombre: 'Fepo Cambiasso', videoId: 'zNRcYUV6ZdE' },
+  { nombre: 'Fepo', videoId: 'zNRcYUV6ZdE' },
   { nombre: 'Coval', videoId: '3CRVIZJU8F8' },
   { nombre: 'Francisca y Los Exploradores', videoId: '4GrL1ccJ3mo' },
   { nombre: 'Luaso', videoId: 'yEq3rOBf0SM' },
   { nombre: 'Martu Brito', videoId: 'BZivQ-XM7tI' },
-  { nombre: 'Motel', videoId: 'nTQM4gD68Yo' },
+  { nombre: 'Motel Montpellier', videoId: 'nTQM4gD68Yo' },
   { nombre: 'JJJulian', videoId: 'jngaRABfN50' },
-  { nombre: 'Mina', videoId: 'kLsmlObEMUk' },
+  { nombre: 'Mina Baxx', videoId: 'kLsmlObEMUk' },
   { nombre: 'Los Palmos', videoId: 'qXqajLd4YHI' },
 ];
 import { InjectRepository } from '@nestjs/typeorm';

@@ -13,14 +13,14 @@ const FEATURED = [
 const ALL_SESSIONS = [
   { nombre: "Manu Martínez", videoId: "3u0bbataius" },
   { nombre: "Mariana Michi", videoId: "__KGJ4_HmgY" },
-  { nombre: "Fepo Cambiasso", videoId: "zNRcYUV6ZdE" },
+  { nombre: "Fepo", videoId: "zNRcYUV6ZdE" },
   { nombre: "Coval", videoId: "3CRVIZJU8F8" },
   { nombre: "Francisca y Los Exploradores", videoId: "4GrL1ccJ3mo" },
   { nombre: "Luaso", videoId: "yEq3rOBf0SM" },
   { nombre: "Martu Brito", videoId: "BZivQ-XM7tI" },
-  { nombre: "Motel", videoId: "nTQM4gD68Yo" },
+  { nombre: "Motel Montpellier", videoId: "nTQM4gD68Yo" },
   { nombre: "JJJulian", videoId: "jngaRABfN50" },
-  { nombre: "Mina", videoId: "kLsmlObEMUk" },
+  { nombre: "Mina Baxx", videoId: "kLsmlObEMUk" },
   { nombre: "Los Palmos", videoId: "qXqajLd4YHI" },
 ];
 
@@ -176,7 +176,7 @@ export default function Home() {
           <div className={styles.aboutText}>
             <span className={styles.aboutEyebrow}>Sobre EN .REC</span>
             <h2 className={styles.aboutTitle}>
-              Un espacio, una canción,<br />una forma de mirar.
+              Donde la música encuentra<br />un escenario propio.
             </h2>
             <p className={styles.aboutBody}>
               EN .REC es un proyecto audiovisual dedicado a registrar música en vivo desde una mirada estética, sonora y curatorial. Cada sesión se desarrolla junto al artista, buscando una locación, una puesta visual y una forma de filmar que dialoguen con su identidad.

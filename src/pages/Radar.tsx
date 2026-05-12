@@ -318,6 +318,12 @@ export default function Radar() {
         {/* Header */}
         <div className={styles.formHeader}>
           <h1 className={styles.title}>
+            <svg className={styles.radarIcon} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
+              <path d="M15.51 15.56a5 5 0 1 0 -3.51 1.44" />
+              <path d="M18.832 17.86a9 9 0 1 0 -6.832 3.14" />
+              <path d="M12 12v9" />
+            </svg>
             Radar <span className={styles.titleBrand}>EN .REC</span>
           </h1>
           <p className={styles.subtitle}>
