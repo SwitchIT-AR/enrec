@@ -140,6 +140,8 @@ function validate(data: FormData, verifyStatus: VerifyStatus): Errors {
     errs.ytChannel = "Canal no encontrado. Revisá el handle o link ingresado";
   } else if (verifyStatus === "not_subscribed") {
     errs.ytChannel = "No estás suscripto al canal de EN .REC. Suscribite y volvé a verificar";
+  } else if (verifyStatus === "couldBePrivate") {
+    errs.ytChannel = "Tus suscripciones son privadas y no podemos verificarte. Hacelas públicas en YouTube, suscribite a EN .REC y volvé a verificar";
   }
 
   if (!data.tyc) errs.tyc = "Debés aceptar los términos y condiciones";
