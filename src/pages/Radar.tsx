@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import type { FormEvent, ChangeEvent } from "react";
 import styles from "./Radar.module.css";
 import logo from "../assets/logo-enrec.png";
+import { gtmPush } from "../gtm";
 
 const API_URL = "/api/radar";
 
@@ -252,6 +253,7 @@ export default function Radar() {
       });
 
       if (res.ok) {
+        gtmPush({ event: "radar_form_submit" });
         setStatus("success");
         setForm(initialData);
         window.scrollTo({ top: 0, behavior: "smooth" });
