@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import type { FormEvent, ChangeEvent } from "react";
 import styles from "./Radar.module.css";
+import logo from "../assets/logo-enrec.png";
 
 const API_URL = "/api/radar";
 
@@ -277,7 +278,16 @@ export default function Radar() {
       <div className={styles.container}>
         {/* Header */}
         <div className={styles.formHeader}>
-          <h1 className={styles.title}>Radar EN .REC 🎙️</h1>
+          <h1 className={styles.title}>
+            Radar{" "}
+            <img src={logo} alt="EN .REC" className={styles.titleLogo} />
+            <svg className={styles.radarIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" />
+              <circle cx="12" cy="12" r="6" stroke="currentColor" strokeWidth="1.5" />
+              <circle cx="12" cy="12" r="2" stroke="currentColor" strokeWidth="1.5" />
+              <line x1="12" y1="12" x2="20.5" y2="5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </h1>
           <p className={styles.subtitle}>
             Estamos buscando un nuevo proyecto musical para grabar una sesión en vivo junto a EN
             .REC. Si tenés un proyecto solista o una banda, completá este formulario y mostranos
