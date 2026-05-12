@@ -74,6 +74,12 @@ export class RadarController {
     await this.service.deletePostulacion(id);
   }
 
+  @Get('admin/ga4-stats')
+  async getGa4Stats(@Headers('authorization') auth: string) {
+    this.checkAdmin(auth);
+    return this.service.getGa4Stats();
+  }
+
   @Get('admin/youtube-stats')
   async getYoutubeStats(@Headers('authorization') auth: string) {
     this.checkAdmin(auth);

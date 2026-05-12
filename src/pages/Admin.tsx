@@ -104,6 +104,7 @@ export default function Admin() {
   const [setsError, setSetsError] = useState("");
   const [ytStats, setYtStats] = useState<Youtubestat[] | null>(null);
   const [ytLoading, setYtLoading] = useState(false);
+  const [ga4Stats, setGa4Stats] = useState<Record<string, { views: number; users: number }> | null>(null);
 
   const authHeaders = (t: string) => ({ Authorization: `Bearer ${t}` });
 
@@ -137,8 +138,18 @@ export default function Admin() {
     finally { setYtLoading(false); }
   };
 
+  const fetchGa4Stats = async (t: string) => {
+    try {
+      const res = await fetch("/api/radar/admin/ga4-stats", { headers: authHeaders(t) });
+      if (res.ok) {
+        const json = await res.json();
+        if (!json.error) setGa4Stats(json);
+      }
+    } catch { /* silent */ }
+  };
+
   useEffect(() => {
-    if (token) { fetchData(token); fetchSets(token); fetchYtStats(token); }
+    if (token) { fetchData(token); fetchSets(token); fetchYtStats(token); fetchGa4Stats(token); }
   }, [token]);
 
   const handleLogin = (e: React.FormEvent) => {
@@ -675,6 +686,31 @@ export default function Admin() {
       {/* ── Tab: Estadísticas ── */}
       {activeTab === "estadisticas" && (
         <div className={styles.statsSection}>
+
+          {/* Cards GA4 — tráfico hoy */}
+          {ga4Stats && (
+            <div className={styles.ga4Block}>
+              <h3 className={styles.ytStatsTitle}>Tráfico hoy</h3>
+              <div className={styles.statsCards}>
+                <div className={styles.statCard}>
+                  <span className={styles.statNum}>{ga4Stats["/"]?.views ?? 0}</span>
+                  <span className={styles.statLabel}>Vistas en Home hoy</span>
+                </div>
+                <div className={styles.statCard}>
+                  <span className={styles.statNum}>{ga4Stats["/"]?.users ?? 0}</span>
+                  <span className={styles.statLabel}>Usuarios activos en Home</span>
+                </div>
+                <div className={`${styles.statCard} ${styles.statCardOk}`}>
+                  <span className={styles.statNum}>{ga4Stats["/radar"]?.views ?? 0}</span>
+                  <span className={styles.statLabel}>Vistas en /radar hoy</span>
+                </div>
+                <div className={`${styles.statCard} ${styles.statCardOk}`}>
+                  <span className={styles.statNum}>{ga4Stats["/radar"]?.users ?? 0}</span>
+                  <span className={styles.statLabel}>Usuarios activos en /radar</span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Cards de inscriptos */}
           {data && (() => {
