@@ -38,8 +38,8 @@ export class RadarController {
 
   @Post('track')
   @HttpCode(204)
-  trackVisit(@Body('path') path: string) {
-    if (path) this.tracking.record(path);
+  trackVisit(@Body('path') path: string, @Body('sid') sid: string) {
+    if (path && sid) this.tracking.record(path, sid);
   }
 
   @Get('admin/realtime')

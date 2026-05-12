@@ -113,7 +113,7 @@ export default function Home() {
         {/* Contenido encima */}
         <div className={styles.heroContent}>
           <img src={logo} alt="EN .REC" className={styles.heroLogo} />
-          <p className={styles.heroTagline}>Lo que ves, lo que suena.</p>
+          <p className={styles.heroTagline}>Música viva en espacios únicos</p>
 
           {/* Info de la sesión activa */}
           <div className={styles.sessionInfo}>

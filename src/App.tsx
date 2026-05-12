@@ -6,6 +6,16 @@ import Radar from "./pages/Radar";
 import Admin from "./pages/Admin";
 import { gtmPush } from "./gtm";
 
+function getSessionId(): string {
+  const key = "enrec_sid";
+  let sid = sessionStorage.getItem(key);
+  if (!sid) {
+    sid = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    sessionStorage.setItem(key, sid);
+  }
+  return sid;
+}
+
 export default function App() {
   const location = useLocation();
 
@@ -14,7 +24,7 @@ export default function App() {
     fetch("/api/radar/track", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ path: location.pathname }),
+      body: JSON.stringify({ path: location.pathname, sid: getSessionId() }),
     }).catch(() => {});
   }, [location.pathname]);
 
