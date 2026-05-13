@@ -48,6 +48,12 @@ export class RadarController {
     return this.tracking.getStats();
   }
 
+  @Get('admin/visit-stats')
+  getVisitStats(@Headers('authorization') auth: string) {
+    this.checkAdmin(auth);
+    return this.tracking.getTotalStats();
+  }
+
   // ── Formulario público ────────────────────────────────────────────────────
 
   @Post()

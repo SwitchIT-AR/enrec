@@ -108,6 +108,7 @@ export default function Admin() {
   const [ytStats, setYtStats] = useState<Youtubestat[] | null>(null);
   const [ytLoading, setYtLoading] = useState(false);
   const [ga4, setGa4] = useState<{ total: number; pages: Record<string, number> } | null>(null);
+  const [visitStats, setVisitStats] = useState<{ uniqueVisitors: number; totalPageViews: number } | null>(null);
   const [baselineDate, setBaselineDate] = useState<string | null>(null);
   const [capturingBaseline, setCapturingBaseline] = useState(false);
 
@@ -171,10 +172,17 @@ export default function Admin() {
     } catch { /* silent */ }
   };
 
+  const fetchVisitStats = async (t: string) => {
+    try {
+      const res = await fetch("/api/radar/admin/visit-stats", { headers: authHeaders(t) });
+      if (res.ok) setVisitStats(await res.json());
+    } catch { /* silent */ }
+  };
+
   useEffect(() => {
     if (!token) return;
-    fetchData(token); fetchSets(token); fetchYtStats(token); fetchGa4(token); fetchBaseline(token);
-    const interval = setInterval(() => fetchGa4(token), 30000);
+    fetchData(token); fetchSets(token); fetchYtStats(token); fetchGa4(token); fetchBaseline(token); fetchVisitStats(token);
+    const interval = setInterval(() => { fetchGa4(token); fetchVisitStats(token); }, 30000);
     return () => clearInterval(interval);
   }, [token]);
 
@@ -341,6 +349,14 @@ export default function Admin() {
             <div className={`${styles.statCard} ${styles.statCardOk}`}><span className={styles.statNum}>{bothOk}</span><span className={styles.statLabel}>Ambas correctas</span></div>
             <div className={`${styles.statCard} ${styles.statCardHalf}`}><span className={styles.statNum}>{oneOk}</span><span className={styles.statLabel}>Una correcta</span></div>
             <div className={`${styles.statCard} ${styles.statCardNone}`}><span className={styles.statNum}>{noneOk}</span><span className={styles.statLabel}>Ninguna correcta</span></div>
+            <div className={styles.statCard}>
+              <span className={styles.statNum}>{visitStats ? visitStats.uniqueVisitors.toLocaleString("es-AR") : "—"}</span>
+              <span className={styles.statLabel}>Visitantes únicos</span>
+            </div>
+            <div className={styles.statCard}>
+              <span className={styles.statNum}>{visitStats ? visitStats.totalPageViews.toLocaleString("es-AR") : "—"}</span>
+              <span className={styles.statLabel}>Páginas vistas</span>
+            </div>
             <div className={`${styles.statCard} ${styles.statCardLive}`}>
               <span className={styles.statNum}>{ga4 ? ga4.total : "—"}</span>
               <span className={styles.statLabel}>🔴 Usuarios ahora</span>
