@@ -21,6 +21,10 @@ export default function App() {
 
   useEffect(() => {
     gtmPush({ event: "page_view", page_path: location.pathname });
+    // Meta Pixel — re-fire PageView on SPA navigation
+    if (typeof (window as { fbq?: (...a: unknown[]) => void }).fbq === "function") {
+      (window as { fbq: (...a: unknown[]) => void }).fbq("track", "PageView");
+    }
     fetch("/api/radar/track", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
