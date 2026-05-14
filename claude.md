@@ -398,6 +398,76 @@ Deploy:
 - VPS propio si se quiere control total
 - Docker opcional
 
+## 15. Infraestructura real de producción
+
+### Servidor
+
+El sitio corre en un **Proxmox VE** con un **LXC Container (CT 4100)**.
+
+- Host Proxmox: `100.66.210.79` — usuario `root` — contraseña `Panama26+`
+- Para ejecutar comandos dentro del CT se usa `pct exec`:
+
+```bash
+# Conectar al host Proxmox
+sshpass -p 'Panama26+' ssh -o StrictHostKeyChecking=no root@100.66.210.79 '...'
+
+# Ejecutar dentro del CT 4100 (SIEMPRE usar bash -lc para cargar PATH/nvm/node)
+pct exec 4100 -- bash -lc "comando aquí"
+```
+
+**IMPORTANTE:** Usar `bash -lc` (login shell), NO `bash -c`. Sin el `-l` no se carga el PATH de node/npm/pnpm y los comandos fallan con "command not found".
+
+### Directorio del proyecto en el CT
+
+```
+/home/sites/enrec/          ← raíz del repo
+/home/sites/enrec/dist/     ← frontend compilado (servido por nginx)
+/home/sites/enrec/backend/  ← NestJS backend
+```
+
+### Proceso PM2
+
+- Nombre: `enrec-backend`
+- ID PM2: `13`
+- Comando de restart: `pm2 restart enrec-backend`
+
+### Comandos de deploy
+
+**Solo frontend** (sin cambios de backend):
+```bash
+sshpass -p 'Panama26+' ssh -o StrictHostKeyChecking=no root@100.66.210.79 \
+  'pct exec 4100 -- bash -lc "cd /home/sites/enrec && git pull && pnpm build"'
+```
+
+**Frontend + backend** (cuando hay cambios en `/backend`):
+```bash
+sshpass -p 'Panama26+' ssh -o StrictHostKeyChecking=no root@100.66.210.79 \
+  'pct exec 4100 -- bash -lc "cd /home/sites/enrec && git pull && pnpm build && cd backend && npm run build && pm2 restart enrec-backend"'
+```
+
+**Flujo completo de deploy desde local:**
+1. `git add ... && git commit -m "..."` — commitear cambios
+2. `git push` — subir a GitHub (repo: `SwitchIT-AR/enrec`)
+3. Ejecutar el comando SSH de arriba según corresponda
+
+### Variables de entorno del backend
+
+Están en `/home/sites/enrec/backend/.env` dentro del CT. Incluyen:
+- `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` — PostgreSQL local
+- `ADMIN_TOKEN` — token para el panel `/admin`
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_SECURE` — email
+- `FROM_NAME`, `FROM_EMAIL`, `NOTIFY_EMAIL` — configuración de emails
+- `YOUTUBE_API_KEY` — YouTube Data API v3
+- `ENREC_CHANNEL_ID` — canal de YouTube de EN .REC
+
+### Stack real en producción
+
+- **Frontend:** React 19 + Vite 7 + TypeScript + Mantine + CSS Modules
+- **Backend:** NestJS v10 + TypeORM + PostgreSQL (`synchronize: true`)
+- **Process manager:** PM2
+- **Web server:** nginx (sirve `dist/` y hace proxy al backend en `/api/`)
+- **Node en el CT:** instalado vía nvm (por eso requiere login shell)
+
 ## 14. Modelo de datos sugerido
 
 ### Session
