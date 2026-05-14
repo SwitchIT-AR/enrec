@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import type { FormEvent, ChangeEvent } from "react";
 import styles from "./Radar.module.css";
-import { gtmPush } from "../gtm";
+import { gtmPush, gtagConversion } from "../gtm";
 
 const API_URL = "/api/radar";
 
@@ -255,6 +255,7 @@ export default function Radar() {
 
       if (res.ok) {
         gtmPush({ event: "radar_form_submit" });
+        gtagConversion(import.meta.env.VITE_GTAG_CONVERSION_LABEL);
         setStatus("success");
         setForm(initialData);
         window.scrollTo({ top: 0, behavior: "smooth" });

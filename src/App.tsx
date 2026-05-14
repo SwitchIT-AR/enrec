@@ -24,6 +24,9 @@ export default function App() {
     // Meta Pixel — re-fire PageView on SPA navigation
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (typeof (window as any).fbq === "function") (window as any).fbq("track", "PageView");
+    // Google Ads — re-fire page_view on SPA navigation
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (typeof (window as any).gtag === "function") (window as any).gtag("event", "page_view", { page_path: location.pathname });
     fetch("/api/radar/track", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
