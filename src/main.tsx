@@ -6,21 +6,6 @@ import "@mantine/core/styles.css";
 import "./index.css";
 import App from "./App.tsx";
 
-const GTAG_ID = import.meta.env.VITE_GTAG_ID;
-if (GTAG_ID && !GTAG_ID.startsWith("AW-XXX")) {
-  const script = document.createElement("script");
-  script.async = true;
-  script.src = `https://www.googletagmanager.com/gtag/js?id=${GTAG_ID}`;
-  document.head.appendChild(script);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (window as any).dataLayer = (window as any).dataLayer || [];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (window as any).gtag = function (...args: any[]) { (window as any).dataLayer.push(args); };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (window as any).gtag("js", new Date());
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (window as any).gtag("config", GTAG_ID);
-}
 
 const theme = createTheme({
   fontFamily: "'Space Grotesk', system-ui, sans-serif",
