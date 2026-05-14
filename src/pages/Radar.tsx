@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import type { FormEvent, ChangeEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import styles from "./Radar.module.css";
-import { gtmPush, gtagConversion } from "../gtm";
+import { gtmPush } from "../gtm";
 
 const API_URL = "/api/radar";
 
@@ -150,6 +151,7 @@ function validate(data: FormData, verifyStatus: VerifyStatus): Errors {
 const SESSION_KEY = "radar_draft";
 
 export default function Radar() {
+  const navigate = useNavigate();
   const [form, setForm] = useState<FormData>(initialData);
   const [errors, setErrors] = useState<Errors>({});
   const [tycOpen, setTycOpen] = useState(false);
@@ -254,11 +256,7 @@ export default function Radar() {
       });
 
       if (res.ok) {
-        gtmPush({ event: "radar_form_submit" });
-        gtagConversion(import.meta.env.VITE_GTAG_CONVERSION_LABEL);
-        setStatus("success");
-        setForm(initialData);
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        navigate("/radar/gracias");
       } else {
         const body = await res.json().catch(() => ({}));
         if (body?.message?.code === "outdated_form" || body?.code === "outdated_form") {
@@ -288,24 +286,6 @@ export default function Radar() {
           >
             Recargar página
           </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (status === "success") {
-    return (
-      <div className={styles.successScreen}>
-        <div className={styles.successCard}>
-          <div className={styles.successDot} />
-          <h1 className={styles.successTitle}>¡Postulación enviada!</h1>
-          <p className={styles.successText}>
-            Recibimos tu formulario. Revisaremos todos los proyectos y, si quedás entre los
-            finalistas, te contactaremos al email que dejaste.
-          </p>
-          <p className={styles.successSub}>
-            Recordá que el cierre de inscripciones es el <strong>31 de Julio de 2026</strong>.
-          </p>
         </div>
       </div>
     );

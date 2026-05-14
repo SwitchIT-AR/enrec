@@ -3,6 +3,7 @@ import { Routes, Route, useLocation } from "react-router-dom";
 import Header from "./components/Header";
 import Home from "./pages/Home";
 import Radar from "./pages/Radar";
+import RadarSuccess from "./pages/RadarSuccess";
 import Admin from "./pages/Admin";
 import { gtmPush } from "./gtm";
 
@@ -41,6 +42,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/radar" element={<Radar />} />
+          <Route path="/radar/gracias" element={<RadarSuccess />} />
           <Route path="/admin" element={<Admin />} />
         </Routes>
       </main>
