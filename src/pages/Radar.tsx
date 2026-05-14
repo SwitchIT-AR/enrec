@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import type { FormEvent, ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./Radar.module.css";
-import { gtmPush } from "../gtm";
 
 const API_URL = "/api/radar";
 
