@@ -15,6 +15,14 @@ function checkAnswer(answer: string, correct: string) {
   return answer.split("|")[0].trim() === correct;
 }
 
+// Retorna true si hay evidencia de que vio la sesión:
+// respondió bien (beneficio de la duda) O respondió mal pero escribió una aclaración
+function watchedSession(answer: string, correct: string) {
+  if (checkAnswer(answer, correct)) return true;
+  const clarification = answer.split("|")[1]?.trim() ?? "";
+  return clarification.length > 0;
+}
+
 function toEmbedUrl(url: string): string {
   if (!url) return "";
   const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
@@ -809,7 +817,7 @@ export default function Admin() {
                       <th>Artista</th>
                       <th>★</th>
                       <th>Preguntas</th>
-                      <th>Aclaró resp.</th>
+                      <th>Vio las sesiones</th>
                       {scoreFields.map((f) => <th key={f.key}>{f.label}</th>)}
                       <th>Total / 50</th>
                     </tr>
@@ -839,15 +847,13 @@ export default function Admin() {
                             </span>
                           </td>
                           <td>
-                            <button
-                              className={`${styles.aclaroBtn} ${p.aclaro_respuestas === true ? styles.aclaroBtnYes : p.aclaro_respuestas === false ? styles.aclaroBtnNo : styles.aclaroBtnNull}`}
-                              onClick={() => {
-                                const next = p.aclaro_respuestas === null ? true : p.aclaro_respuestas === true ? false : null;
-                                patchScore(p.id, { aclaro_respuestas: next });
-                              }}
-                            >
-                              {p.aclaro_respuestas === true ? "Sí" : p.aclaro_respuestas === false ? "No" : "—"}
-                            </button>
+                            {(() => {
+                              const w1 = watchedSession(p.respuesta1, r1);
+                              const w2 = watchedSession(p.respuesta2, r2);
+                              const count = [w1, w2].filter(Boolean).length;
+                              const cls = count === 2 ? styles.aclaroBtnYes : count === 0 ? styles.aclaroBtnNo : styles.aclaroBtnHalf;
+                              return <span className={`${styles.aclaroChip} ${cls}`}>{count}/2</span>;
+                            })()}
                           </td>
                           {scoreFields.map((f) => (
                             <td key={f.key} className={styles.scoreCell}>
