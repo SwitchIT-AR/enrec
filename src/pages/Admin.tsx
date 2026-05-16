@@ -116,7 +116,11 @@ export default function Admin() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [expanded, setExpanded] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<"postulaciones" | "preguntas" | "estadisticas" | "calificacion">("postulaciones");
+  const [activeTab, setActiveTab] = useState<"postulaciones" | "preguntas" | "estadisticas" | "calificacion">(
+    () => (localStorage.getItem("admin_tab") as "postulaciones" | "preguntas" | "estadisticas" | "calificacion") ?? "postulaciones"
+  );
+
+  useEffect(() => { localStorage.setItem("admin_tab", activeTab); }, [activeTab]);
   const [editingSet, setEditingSet] = useState<SetForm | null>(null);
   const [savingSet, setSavingSet] = useState(false);
   const [setsError, setSetsError] = useState("");
