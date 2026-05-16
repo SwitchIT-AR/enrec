@@ -22,6 +22,7 @@ import { Postulacion } from './radar.entity';
 import { PreguntaSet } from './pregunta-set.entity';
 import { CreateRadarDto } from './create-radar.dto';
 import { PreguntaSetDto } from './pregunta-set.dto';
+import { UpdateScoreDto } from './update-score.dto';
 
 @Injectable()
 export class RadarService {
@@ -58,6 +59,13 @@ export class RadarService {
 
   async deletePostulacion(id: number): Promise<void> {
     await this.repo.delete(id);
+  }
+
+  async updateScore(id: number, dto: UpdateScoreDto): Promise<Postulacion> {
+    await this.repo.update(id, dto);
+    const updated = await this.repo.findOne({ where: { id } });
+    if (!updated) throw new NotFoundException();
+    return updated;
   }
 
   async getYoutubeStats(): Promise<Record<string, unknown>[]> {

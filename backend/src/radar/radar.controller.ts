@@ -9,6 +9,7 @@ import {
   Ip,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   Put,
   Query,
@@ -17,6 +18,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { CreateRadarDto } from './create-radar.dto';
 import { PreguntaSetDto } from './pregunta-set.dto';
+import { UpdateScoreDto } from './update-score.dto';
 import { RadarService } from './radar.service';
 import { TrackingService } from './tracking.service';
 
@@ -86,6 +88,16 @@ export class RadarController {
   async getAll(@Headers('authorization') auth: string) {
     this.checkAdmin(auth);
     return this.service.findAll();
+  }
+
+  @Patch('admin/postulaciones/:id/score')
+  async updateScore(
+    @Headers('authorization') auth: string,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateScoreDto,
+  ) {
+    this.checkAdmin(auth);
+    return this.service.updateScore(id, dto);
   }
 
   @Delete('admin/postulaciones/:id')

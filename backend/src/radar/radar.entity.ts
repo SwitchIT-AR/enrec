@@ -44,6 +44,27 @@ export class Postulacion {
   @Column({ type: 'integer', nullable: true })
   pregunta_set_id: number | null;
 
+  @Column({ type: 'integer', nullable: true })
+  estrellas: number | null;
+
+  @Column({ type: 'boolean', nullable: true })
+  aclaro_respuestas: boolean | null;
+
+  @Column({ type: 'integer', nullable: true })
+  calidad_proyecto: number | null;
+
+  @Column({ type: 'integer', nullable: true })
+  calidad_artista: number | null;
+
+  @Column({ type: 'integer', nullable: true })
+  repertorio: number | null;
+
+  @Column({ type: 'integer', nullable: true })
+  presencia_camara: number | null;
+
+  @Column({ type: 'integer', nullable: true })
+  compatibilidad: number | null;
+
   @CreateDateColumn()
   created_at: Date;
 }

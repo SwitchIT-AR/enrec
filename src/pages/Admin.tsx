@@ -38,6 +38,13 @@ type Postulacion = {
   ip_address: string | null;
   pregunta_set_id: number | null;
   created_at: string;
+  estrellas: number | null;
+  aclaro_respuestas: boolean | null;
+  calidad_proyecto: number | null;
+  calidad_artista: number | null;
+  repertorio: number | null;
+  presencia_camara: number | null;
+  compatibilidad: number | null;
 };
 
 type PreguntaSet = {
@@ -101,7 +108,7 @@ export default function Admin() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [expanded, setExpanded] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<"postulaciones" | "preguntas" | "estadisticas">("postulaciones");
+  const [activeTab, setActiveTab] = useState<"postulaciones" | "preguntas" | "estadisticas" | "calificacion">("postulaciones");
   const [editingSet, setEditingSet] = useState<SetForm | null>(null);
   const [savingSet, setSavingSet] = useState(false);
   const [setsError, setSetsError] = useState("");
@@ -253,6 +260,18 @@ export default function Admin() {
     if (expanded === id) setExpanded(null);
   };
 
+  // ── Score patch ──────────────────────────────────────────────────────────
+  const patchScore = async (id: number, patch: Partial<Postulacion>) => {
+    setData((prev) => prev?.map((p) => p.id === id ? { ...p, ...patch } : p) ?? null);
+    try {
+      await fetch(`/api/radar/admin/postulaciones/${id}/score`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...authHeaders(token) },
+        body: JSON.stringify(patch),
+      });
+    } catch { /* silent */ }
+  };
+
   // ── Set CRUD ──────────────────────────────────────────────────────────────
   const saveSet = async () => {
     if (!editingSet) return;
@@ -393,6 +412,12 @@ export default function Admin() {
         >
           Estadísticas
         </button>
+        <button
+          className={`${styles.tab} ${activeTab === "calificacion" ? styles.tabActive : ""}`}
+          onClick={() => setActiveTab("calificacion")}
+        >
+          Calificación
+        </button>
       </div>
 
       {/* ── Tab: Postulaciones ── */}
@@ -408,6 +433,7 @@ export default function Admin() {
                   <tr>
                     <th>#</th>
                     <th>Artista / Banda</th>
+                    <th>★</th>
                     <th>Género</th>
                     <th>Email</th>
                     <th>Instagram</th>
@@ -439,6 +465,15 @@ export default function Admin() {
                         >
                           <td className={styles.idCell}>{p.id}</td>
                           <td className={styles.artistCell}>{p.artista}</td>
+                          <td className={styles.starsCell} onClick={(e) => e.stopPropagation()}>
+                            {[1, 2, 3, 4, 5].map((n) => (
+                              <span
+                                key={n}
+                                className={`${styles.star} ${(p.estrellas ?? 0) >= n ? styles.starFilled : styles.starEmpty}`}
+                                onClick={() => patchScore(p.id, { estrellas: p.estrellas === n ? null : n })}
+                              >★</span>
+                            ))}
+                          </td>
                           <td>{p.genero}</td>
                           <td>
                             <a href={`mailto:${p.email}`} className={styles.link} onClick={(e) => e.stopPropagation()}>
@@ -484,7 +519,7 @@ export default function Admin() {
                           const r2ok = checkAnswer(p.respuesta2, r2);
                           return (
                             <tr key={`${p.id}-detail`} className={styles.detailRow}>
-                              <td colSpan={12}>
+                              <td colSpan={13}>
                                 <div className={styles.detail}>
                                   <div className={styles.detailGrid}>
                                     <div className={styles.detailBlock}>
@@ -750,6 +785,103 @@ export default function Admin() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── Tab: Calificación ── */}
+      {activeTab === "calificacion" && (
+        <div className={styles.scoreSection}>
+          {(!data || data.length === 0) && <p className={styles.empty}>No hay postulaciones para calificar.</p>}
+          {data && data.length > 0 && (() => {
+            const sorted = [...data].sort((a, b) => (b.estrellas ?? -1) - (a.estrellas ?? -1));
+            const scoreFields: Array<{ key: keyof Postulacion; label: string }> = [
+              { key: "calidad_proyecto", label: "Calidad Proyecto" },
+              { key: "calidad_artista", label: "Calidad Artista" },
+              { key: "repertorio", label: "Repertorio" },
+              { key: "presencia_camara", label: "Presencia Cámara" },
+              { key: "compatibilidad", label: "Compatibilidad" },
+            ];
+            return (
+              <div className={styles.tableWrap}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th>Artista</th>
+                      <th>★</th>
+                      <th>Preguntas</th>
+                      <th>Aclaró resp.</th>
+                      {scoreFields.map((f) => <th key={f.key}>{f.label}</th>)}
+                      <th>Total / 50</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sorted.map((p) => {
+                      const { r1, r2 } = getCorrectAnswers(p);
+                      const r1ok = checkAnswer(p.respuesta1, r1);
+                      const r2ok = checkAnswer(p.respuesta2, r2);
+                      const correctCount = [r1ok, r2ok].filter(Boolean).length;
+                      const scores = [p.calidad_proyecto, p.calidad_artista, p.repertorio, p.presencia_camara, p.compatibilidad];
+                      const filledScores = scores.filter((s) => s != null) as number[];
+                      const total = filledScores.reduce((acc, s) => acc + s, 0);
+                      const allFilled = filledScores.length === 5;
+                      const isCandidate = allFilled && total >= 35;
+                      return (
+                        <tr key={p.id} className={`${styles.row} ${isCandidate ? styles.rowCandidate : ""}`}>
+                          <td className={styles.artistCell}>{p.artista}</td>
+                          <td className={styles.starsDisplayCell}>
+                            {p.estrellas != null
+                              ? <span className={styles.starsText}>{"★".repeat(p.estrellas)}{"☆".repeat(5 - p.estrellas)}</span>
+                              : <span className={styles.noScore}>—</span>}
+                          </td>
+                          <td className={styles.answerNumCell}>
+                            <span className={correctCount === 2 ? styles.numOk : styles.numWrong}>
+                              {correctCount}/2
+                            </span>
+                          </td>
+                          <td>
+                            <button
+                              className={`${styles.aclaroBtn} ${p.aclaro_respuestas === true ? styles.aclaroBtnYes : p.aclaro_respuestas === false ? styles.aclaroBtnNo : styles.aclaroBtnNull}`}
+                              onClick={() => {
+                                const next = p.aclaro_respuestas === null ? true : p.aclaro_respuestas === true ? false : null;
+                                patchScore(p.id, { aclaro_respuestas: next });
+                              }}
+                            >
+                              {p.aclaro_respuestas === true ? "Sí" : p.aclaro_respuestas === false ? "No" : "—"}
+                            </button>
+                          </td>
+                          {scoreFields.map((f) => (
+                            <td key={f.key} className={styles.scoreCell}>
+                              <select
+                                className={styles.scoreSelect}
+                                value={(p[f.key] as number | null) ?? ""}
+                                onChange={(e) => {
+                                  const val = e.target.value === "" ? null : Number(e.target.value);
+                                  patchScore(p.id, { [f.key]: val });
+                                }}
+                              >
+                                <option value="">—</option>
+                                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+                                  <option key={n} value={n}>{n}</option>
+                                ))}
+                              </select>
+                            </td>
+                          ))}
+                          <td className={styles.totalCell}>
+                            {filledScores.length > 0 ? (
+                              <span className={isCandidate ? styles.totalCandidate : allFilled ? styles.totalComplete : styles.totalPartial}>
+                                {total}{allFilled ? "/50" : `/${filledScores.length * 10}`}
+                                {isCandidate && <span className={styles.candidateBadge}>✓ Candidato</span>}
+                              </span>
+                            ) : <span className={styles.noScore}>—</span>}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            );
+          })()}
         </div>
       )}
 

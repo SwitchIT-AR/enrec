@@ -1082,3 +1082,152 @@
   opacity: 0.5;
   cursor: default;
 }
+
+/* ── Estrellas en tab Postulaciones ── */
+.starsCell {
+  white-space: nowrap;
+  padding-right: 6px !important;
+}
+
+.star {
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0 1px;
+  user-select: none;
+  transition: transform 0.1s;
+  display: inline-block;
+}
+
+.star:hover {
+  transform: scale(1.25);
+}
+
+.starFilled {
+  color: #f59e0b;
+}
+
+.starEmpty {
+  color: rgba(255, 255, 255, 0.15);
+}
+
+.starEmpty:hover {
+  color: rgba(245, 158, 11, 0.6);
+}
+
+/* ── Tab Calificación ── */
+.scoreSection {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.rowCandidate {
+  background: rgba(34, 197, 94, 0.04) !important;
+  border-left: 3px solid #4ade80;
+}
+
+.starsDisplayCell {
+  white-space: nowrap;
+}
+
+.starsText {
+  font-size: 13px;
+  letter-spacing: 1px;
+  color: #f59e0b;
+}
+
+.noScore {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.aclaroBtn {
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: none;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.aclaroBtnYes {
+  color: #4ade80;
+  border-color: rgba(34, 197, 94, 0.4);
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.aclaroBtnNo {
+  color: #f87171;
+  border-color: rgba(248, 113, 113, 0.4);
+  background: rgba(248, 113, 113, 0.08);
+}
+
+.aclaroBtnNull {
+  color: var(--muted);
+}
+
+.scoreCell {
+  padding: 8px 8px !important;
+}
+
+.scoreSelect {
+  appearance: none;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  padding: 4px 8px;
+  width: 52px;
+  text-align: center;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.scoreSelect:focus {
+  border-color: rgba(225, 82, 56, 0.4);
+}
+
+.totalCell {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.totalCandidate {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 15px;
+  color: #4ade80;
+}
+
+.totalComplete {
+  font-weight: 600;
+  font-size: 14px;
+  color: rgba(240, 240, 240, 0.7);
+}
+
+.totalPartial {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.candidateBadge {
+  display: inline-block;
+  padding: 2px 8px;
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #4ade80;
+  white-space: nowrap;
+}
