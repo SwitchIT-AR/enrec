@@ -817,7 +817,7 @@ export default function Admin() {
                       <th>Artista</th>
                       <th>★</th>
                       <th>Preguntas</th>
-                      <th>Vio las sesiones</th>
+                      <th>Aclaraciones</th>
                       {scoreFields.map((f) => <th key={f.key}>{f.label}</th>)}
                       <th>Total / 50</th>
                     </tr>
