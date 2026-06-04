@@ -90,27 +90,39 @@ export class RadarService {
       const totalViews   = parseInt(stats.viewCount ?? '0');
       const videoCount   = parseInt(stats.videoCount ?? '0');
 
-      // Videos: duración + views para estimar horas
+      // Videos: duración + views + fecha de publicación
       const ids = SESSIONS.map((s) => s.videoId).join(',');
       const vRes = await fetch(
-        `https://www.googleapis.com/youtube/v3/videos?part=statistics,contentDetails&id=${ids}&key=${apiKey}`,
+        `https://www.googleapis.com/youtube/v3/videos?part=statistics,contentDetails,snippet&id=${ids}&key=${apiKey}`,
       );
-      const vData = await vRes.json() as { items?: { id: string; statistics?: Record<string, string>; contentDetails?: { duration?: string } }[] };
+      const vData = await vRes.json() as {
+        items?: {
+          id: string;
+          statistics?: Record<string, string>;
+          contentDetails?: { duration?: string };
+          snippet?: { publishedAt?: string };
+        }[]
+      };
       const items = vData.items ?? [];
+      const cutoff = new Date();
+      cutoff.setFullYear(cutoff.getFullYear() - 1);
 
-      let estimatedWatchHours = 0;
       const videoDetails = SESSIONS.map((session) => {
         const item = items.find((i) => i.id === session.videoId);
         const views = parseInt(item?.statistics?.viewCount ?? '0');
         const durationH = this.parseDuration(item?.contentDetails?.duration ?? 'PT0S');
-        const sessionH = views * durationH;
-        estimatedWatchHours += sessionH;
+        const publishedAt = item?.snippet?.publishedAt ?? null;
+        const isWithinYear = publishedAt ? new Date(publishedAt) >= cutoff : false;
         return {
           nombre: session.nombre,
           videoId: session.videoId,
           views,
           durationMin: Math.round(durationH * 60),
-          estimatedHours: Math.round(sessionH),
+          // Estimación máxima (views × duración): sobreestima porque asume
+          // retention 100% y no filtra por período de 12 meses.
+          estimatedHoursUpperBound: Math.round(views * durationH),
+          publishedAt,
+          isWithinYear,
         };
       });
 
@@ -119,9 +131,11 @@ export class RadarService {
         subscribersGoal: 1000,
         totalViews,
         videoCount,
-        estimatedWatchHours: Math.round(estimatedWatchHours),
         watchHoursGoal: 4000,
         videoDetails,
+        // Nota: las horas reales (rolling 12 meses) solo están en YouTube Analytics API
+        // con OAuth 2.0. Esta API (key) no las expone.
+        watchHoursApiAvailable: false,
       };
     } catch (e) {
       this.logger.error('YPP stats failed', e);
