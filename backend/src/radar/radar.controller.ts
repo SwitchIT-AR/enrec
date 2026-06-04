@@ -110,6 +110,12 @@ export class RadarController {
     await this.service.deletePostulacion(id);
   }
 
+  @Get('admin/youtube-ypp')
+  async getYppStats(@Headers('authorization') auth: string) {
+    this.checkAdmin(auth);
+    return this.service.getYppStats();
+  }
+
   @Get('admin/youtube-stats')
   async getYoutubeStats(@Headers('authorization') auth: string) {
     this.checkAdmin(auth);

@@ -68,6 +68,67 @@ export class RadarService {
     return updated;
   }
 
+  private parseDuration(iso: string): number {
+    const m = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+    if (!m) return 0;
+    return parseInt(m[1] ?? '0') + parseInt(m[2] ?? '0') / 60 + parseInt(m[3] ?? '0') / 3600;
+  }
+
+  async getYppStats(): Promise<Record<string, unknown>> {
+    const apiKey = this.config.get<string>('YOUTUBE_API_KEY');
+    const channelId = this.config.get<string>('ENREC_CHANNEL_ID');
+    if (!apiKey || !channelId) return { error: 'no_config' };
+
+    try {
+      // Canal: suscriptores y views totales
+      const chRes = await fetch(
+        `https://www.googleapis.com/youtube/v3/channels?part=statistics&id=${channelId}&key=${apiKey}`,
+      );
+      const chData = await chRes.json() as { items?: { statistics?: Record<string, string> }[] };
+      const stats = chData.items?.[0]?.statistics ?? {};
+      const subscribers = parseInt(stats.subscriberCount ?? '0');
+      const totalViews   = parseInt(stats.viewCount ?? '0');
+      const videoCount   = parseInt(stats.videoCount ?? '0');
+
+      // Videos: duración + views para estimar horas
+      const ids = SESSIONS.map((s) => s.videoId).join(',');
+      const vRes = await fetch(
+        `https://www.googleapis.com/youtube/v3/videos?part=statistics,contentDetails&id=${ids}&key=${apiKey}`,
+      );
+      const vData = await vRes.json() as { items?: { id: string; statistics?: Record<string, string>; contentDetails?: { duration?: string } }[] };
+      const items = vData.items ?? [];
+
+      let estimatedWatchHours = 0;
+      const videoDetails = SESSIONS.map((session) => {
+        const item = items.find((i) => i.id === session.videoId);
+        const views = parseInt(item?.statistics?.viewCount ?? '0');
+        const durationH = this.parseDuration(item?.contentDetails?.duration ?? 'PT0S');
+        const sessionH = views * durationH;
+        estimatedWatchHours += sessionH;
+        return {
+          nombre: session.nombre,
+          videoId: session.videoId,
+          views,
+          durationMin: Math.round(durationH * 60),
+          estimatedHours: Math.round(sessionH),
+        };
+      });
+
+      return {
+        subscribers,
+        subscribersGoal: 1000,
+        totalViews,
+        videoCount,
+        estimatedWatchHours: Math.round(estimatedWatchHours),
+        watchHoursGoal: 4000,
+        videoDetails,
+      };
+    } catch (e) {
+      this.logger.error('YPP stats failed', e);
+      return { error: 'fetch_error' };
+    }
+  }
+
   async getYoutubeStats(): Promise<Record<string, unknown>[]> {
     const apiKey = this.config.get<string>('YOUTUBE_API_KEY');
     if (!apiKey) return SESSIONS.map((s) => ({ ...s, error: 'no_api' }));

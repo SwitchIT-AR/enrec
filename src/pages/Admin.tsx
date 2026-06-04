@@ -86,6 +86,25 @@ type Youtubestat = {
   baselineCapturedAt: string | null;
 };
 
+type YppVideoDetail = {
+  nombre: string;
+  videoId: string;
+  views: number;
+  durationMin: number;
+  estimatedHours: number;
+};
+
+type YppStats = {
+  subscribers: number;
+  subscribersGoal: number;
+  totalViews: number;
+  videoCount: number;
+  estimatedWatchHours: number;
+  watchHoursGoal: number;
+  videoDetails: YppVideoDetail[];
+  error?: string;
+};
+
 const emptySetForm = (): SetForm => ({
   nombre: "",
   dias: [],
@@ -116,8 +135,8 @@ export default function Admin() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [expanded, setExpanded] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<"postulaciones" | "preguntas" | "estadisticas" | "calificacion">(
-    () => (localStorage.getItem("admin_tab") as "postulaciones" | "preguntas" | "estadisticas" | "calificacion") ?? "postulaciones"
+  const [activeTab, setActiveTab] = useState<"postulaciones" | "preguntas" | "estadisticas" | "calificacion" | "youtube">(
+    () => (localStorage.getItem("admin_tab") as "postulaciones" | "preguntas" | "estadisticas" | "calificacion" | "youtube") ?? "postulaciones"
   );
 
   useEffect(() => { localStorage.setItem("admin_tab", activeTab); }, [activeTab]);
@@ -130,6 +149,8 @@ export default function Admin() {
   const [visitStats, setVisitStats] = useState<{ uniqueVisitors: number; totalPageViews: number } | null>(null);
   const [baselineDate, setBaselineDate] = useState<string | null>(null);
   const [capturingBaseline, setCapturingBaseline] = useState(false);
+  const [yppStats, setYppStats] = useState<YppStats | null>(null);
+  const [yppLoading, setYppLoading] = useState(false);
 
   const authHeaders = (t: string) => ({ Authorization: `Bearer ${t}` });
 
@@ -198,9 +219,18 @@ export default function Admin() {
     } catch { /* silent */ }
   };
 
+  const fetchYppStats = async (t: string) => {
+    setYppLoading(true);
+    try {
+      const res = await fetch("/api/radar/admin/youtube-ypp", { headers: authHeaders(t) });
+      if (res.ok) setYppStats(await res.json());
+    } catch { /* silent */ }
+    finally { setYppLoading(false); }
+  };
+
   useEffect(() => {
     if (!token) return;
-    fetchData(token); fetchSets(token); fetchYtStats(token); fetchGa4(token); fetchBaseline(token); fetchVisitStats(token);
+    fetchData(token); fetchSets(token); fetchYtStats(token); fetchGa4(token); fetchBaseline(token); fetchVisitStats(token); fetchYppStats(token);
     const interval = setInterval(() => { fetchGa4(token); fetchVisitStats(token); }, 30000);
     return () => clearInterval(interval);
   }, [token]);
@@ -429,6 +459,12 @@ export default function Admin() {
           onClick={() => setActiveTab("calificacion")}
         >
           Calificación
+        </button>
+        <button
+          className={`${styles.tab} ${activeTab === "youtube" ? styles.tabActive : ""}`}
+          onClick={() => setActiveTab("youtube")}
+        >
+          YouTube Partner
         </button>
       </div>
 
@@ -890,6 +926,151 @@ export default function Admin() {
                   </tbody>
                 </table>
               </div>
+            );
+          })()}
+        </div>
+      )}
+
+      {/* ── Tab: YouTube Partner ── */}
+      {activeTab === "youtube" && (
+        <div className={styles.yppSection}>
+          {yppLoading && <p className={styles.loading}>Cargando datos de YouTube...</p>}
+          {yppStats?.error && (
+            <p className={styles.errorMsg}>
+              {yppStats.error === "no_config" ? "Falta configurar YOUTUBE_API_KEY o ENREC_CHANNEL_ID en el servidor." : "Error al cargar datos de YouTube."}
+            </p>
+          )}
+          {yppStats && !yppStats.error && (() => {
+            const subPct   = Math.min(100, Math.round((yppStats.subscribers / yppStats.subscribersGoal) * 100));
+            const hoursPct = Math.min(100, Math.round((yppStats.estimatedWatchHours / yppStats.watchHoursGoal) * 100));
+            const subDone  = yppStats.subscribers >= yppStats.subscribersGoal;
+            const hoursDone = yppStats.estimatedWatchHours >= yppStats.watchHoursGoal;
+
+            const pctColor = (pct: number) =>
+              pct >= 100 ? "#4ade80" : pct >= 75 ? "#86efac" : pct >= 40 ? "#fbbf24" : "var(--accent)";
+
+            return (
+              <>
+                <div className={styles.yppHeader}>
+                  <h3 className={styles.yppTitle}>Requisitos para YouTube Partner Program (YPP)</h3>
+                  <p className={styles.yppSubtitle}>
+                    Necesitás cumplir <strong>ambas condiciones</strong> para poder monetizar el canal.
+                  </p>
+                </div>
+
+                {/* Tarjetas de progreso */}
+                <div className={styles.yppCards}>
+                  {/* Suscriptores */}
+                  <div className={`${styles.yppCard} ${subDone ? styles.yppCardDone : ""}`}>
+                    <div className={styles.yppCardTop}>
+                      <span className={styles.yppCardLabel}>Suscriptores</span>
+                      {subDone && <span className={styles.yppDoneBadge}>✓ Cumplido</span>}
+                    </div>
+                    <div className={styles.yppBigNum} style={{ color: pctColor(subPct) }}>
+                      {yppStats.subscribers.toLocaleString("es-AR")}
+                      <span className={styles.yppGoal}> / {yppStats.subscribersGoal.toLocaleString("es-AR")}</span>
+                    </div>
+                    <div className={styles.yppBarTrack}>
+                      <div className={styles.yppBarFill} style={{ width: `${subPct}%`, background: pctColor(subPct) }} />
+                    </div>
+                    <div className={styles.yppBarMeta}>
+                      <span style={{ color: pctColor(subPct), fontWeight: 600 }}>{subPct}%</span>
+                      {!subDone && (
+                        <span className={styles.yppMissing}>
+                          Faltan {(yppStats.subscribersGoal - yppStats.subscribers).toLocaleString("es-AR")} suscriptores
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Horas de reproducción */}
+                  <div className={`${styles.yppCard} ${hoursDone ? styles.yppCardDone : ""}`}>
+                    <div className={styles.yppCardTop}>
+                      <span className={styles.yppCardLabel}>Horas de reproducción</span>
+                      {hoursDone && <span className={styles.yppDoneBadge}>✓ Cumplido</span>}
+                    </div>
+                    <div className={styles.yppBigNum} style={{ color: pctColor(hoursPct) }}>
+                      ~{yppStats.estimatedWatchHours.toLocaleString("es-AR")}h
+                      <span className={styles.yppGoal}> / {yppStats.watchHoursGoal.toLocaleString("es-AR")}h</span>
+                    </div>
+                    <div className={styles.yppBarTrack}>
+                      <div className={styles.yppBarFill} style={{ width: `${hoursPct}%`, background: pctColor(hoursPct) }} />
+                    </div>
+                    <div className={styles.yppBarMeta}>
+                      <span style={{ color: pctColor(hoursPct), fontWeight: 600 }}>{hoursPct}%</span>
+                      {!hoursDone && (
+                        <span className={styles.yppMissing}>
+                          Faltan ~{(yppStats.watchHoursGoal - yppStats.estimatedWatchHours).toLocaleString("es-AR")}h
+                        </span>
+                      )}
+                    </div>
+                    <p className={styles.yppEstNote}>
+                      ⚠ Estimación: views × duración de cada video. Las horas reales solo están en YouTube Studio.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Datos del canal */}
+                <div className={styles.yppChannelRow}>
+                  <div className={styles.yppStatPill}>
+                    <span className={styles.yppStatVal}>{yppStats.subscribers.toLocaleString("es-AR")}</span>
+                    <span className={styles.yppStatLbl}>Suscriptores</span>
+                  </div>
+                  <div className={styles.yppStatPill}>
+                    <span className={styles.yppStatVal}>{yppStats.totalViews.toLocaleString("es-AR")}</span>
+                    <span className={styles.yppStatLbl}>Views totales</span>
+                  </div>
+                  <div className={styles.yppStatPill}>
+                    <span className={styles.yppStatVal}>{yppStats.videoCount}</span>
+                    <span className={styles.yppStatLbl}>Videos publicados</span>
+                  </div>
+                  <div className={styles.yppStatPill}>
+                    <span className={styles.yppStatVal}>~{yppStats.estimatedWatchHours.toLocaleString("es-AR")}h</span>
+                    <span className={styles.yppStatLbl}>Horas estimadas</span>
+                  </div>
+                </div>
+
+                {/* Desglose por video */}
+                <div className={styles.tableWrap}>
+                  <table className={styles.table}>
+                    <thead>
+                      <tr>
+                        <th>Sesión</th>
+                        <th style={{ textAlign: "right" }}>Views</th>
+                        <th style={{ textAlign: "right" }}>Duración (min)</th>
+                        <th style={{ textAlign: "right" }}>Horas estimadas</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[...yppStats.videoDetails]
+                        .sort((a, b) => b.estimatedHours - a.estimatedHours)
+                        .map((v) => (
+                          <tr key={v.videoId} className={styles.row}>
+                            <td className={styles.artistCell}>{v.nombre}</td>
+                            <td style={{ textAlign: "right" }}>{v.views.toLocaleString("es-AR")}</td>
+                            <td style={{ textAlign: "right" }}>{v.durationMin} min</td>
+                            <td style={{ textAlign: "right", fontWeight: 700, color: "var(--accent)" }}>
+                              ~{v.estimatedHours.toLocaleString("es-AR")}h
+                            </td>
+                            <td>
+                              <a href={`https://www.youtube.com/watch?v=${v.videoId}`} target="_blank" rel="noopener noreferrer" className={styles.link}>YT ↗</a>
+                            </td>
+                          </tr>
+                        ))}
+                      <tr className={styles.row} style={{ borderTop: "2px solid var(--border)" }}>
+                        <td className={styles.artistCell}>TOTAL</td>
+                        <td style={{ textAlign: "right" }}>{yppStats.videoDetails.reduce((a, v) => a + v.views, 0).toLocaleString("es-AR")}</td>
+                        <td></td>
+                        <td style={{ textAlign: "right", fontWeight: 700, color: "var(--accent)" }}>
+                          ~{yppStats.estimatedWatchHours.toLocaleString("es-AR")}h
+                        </td>
+                        <td></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </>
             );
           })()}
         </div>
