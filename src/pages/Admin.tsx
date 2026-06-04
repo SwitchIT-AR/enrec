@@ -101,8 +101,10 @@ type YppStats = {
   subscribersGoal: number;
   totalViews: number;
   videoCount: number;
+  watchHoursLongForm: number | null;
   watchHoursGoal: number;
-  watchHours: number | null;
+  shortsViews90d: number | null;
+  shortsViewsGoal: number;
   watchHoursApiAvailable: boolean;
   videoDetails: YppVideoDetail[];
   error?: string;
@@ -944,44 +946,50 @@ export default function Admin() {
             </p>
           )}
           {yppStats && !yppStats.error && (() => {
-            const subPct  = Math.min(100, Math.round((yppStats.subscribers / yppStats.subscribersGoal) * 100));
-            const subDone = yppStats.subscribers >= yppStats.subscribersGoal;
             const pctColor = (pct: number) =>
               pct >= 100 ? "#4ade80" : pct >= 75 ? "#86efac" : pct >= 40 ? "#fbbf24" : "var(--accent)";
 
-            const totalUpperBound = yppStats.videoDetails.reduce((a, v) => a + v.estimatedHoursUpperBound, 0);
-            const withinYearUpperBound = yppStats.videoDetails
-              .filter(v => v.isWithinYear)
-              .reduce((a, v) => a + v.estimatedHoursUpperBound, 0);
+            const subPct  = Math.min(100, Math.round((yppStats.subscribers / yppStats.subscribersGoal) * 100));
+            const subDone = yppStats.subscribers >= yppStats.subscribersGoal;
 
-            const hoursPct  = yppStats.watchHoursApiAvailable && yppStats.watchHours != null
-              ? Math.min(100, Math.round((yppStats.watchHours / yppStats.watchHoursGoal) * 100))
+            const hoursPct  = yppStats.watchHoursLongForm != null
+              ? Math.min(100, Math.round((yppStats.watchHoursLongForm / yppStats.watchHoursGoal) * 100))
               : 0;
-            const hoursDone = yppStats.watchHoursApiAvailable && yppStats.watchHours != null
-              && yppStats.watchHours >= yppStats.watchHoursGoal;
+            const hoursDone = yppStats.watchHoursLongForm != null && yppStats.watchHoursLongForm >= yppStats.watchHoursGoal;
+
+            const shortsPct  = yppStats.shortsViews90d != null
+              ? Math.min(100, Math.round((yppStats.shortsViews90d / yppStats.shortsViewsGoal) * 100))
+              : 0;
+            const shortsDone = yppStats.shortsViews90d != null && yppStats.shortsViews90d >= yppStats.shortsViewsGoal;
+
+            const pathAMet = subDone && hoursDone;
+            const pathBMet = subDone && shortsDone;
 
             return (
               <>
                 <div className={styles.yppHeader}>
                   <h3 className={styles.yppTitle}>Requisitos para YouTube Partner Program (YPP)</h3>
                   <p className={styles.yppSubtitle}>
-                    Necesitás cumplir <strong>ambas condiciones</strong> para poder monetizar.
-                    Las horas cuentan en una ventana <strong>rolling de 12 meses</strong> — las horas viejas se caen.
+                    Necesitás <strong>1.000 suscriptores</strong> + <strong>uno</strong> de los dos caminos:{" "}
+                    4.000h de videos (últimos 12 meses) <strong>o</strong> 10M vistas de Shorts (últimos 90 días).
                   </p>
+                  {(pathAMet || pathBMet) && (
+                    <div className={styles.yppDoneBadge} style={{ marginTop: 8, display: "inline-block" }}>
+                      ✓ Cumplís los requisitos para aplicar al YPP
+                    </div>
+                  )}
                 </div>
 
-                {/* Aviso cuando no hay OAuth configurado */}
                 {!yppStats.watchHoursApiAvailable && (
                   <div className={styles.yppApiWarning}>
-                    <strong>⚠ Las horas de reproducción reales no están disponibles.</strong>
-                    <span> Configurá las variables OAuth en el servidor para obtenerlas automáticamente. Para el dato ahora, entrá a </span>
-                    <a href="https://studio.youtube.com" target="_blank" rel="noopener noreferrer" className={styles.link}>YouTube Studio → Análisis → Ganancias</a>.
+                    <strong>⚠ Datos no disponibles.</strong>
+                    <span> Configurá las variables OAuth en el servidor.</span>
                   </div>
                 )}
 
-                {/* Tarjetas de progreso */}
+                {/* Tres tarjetas */}
                 <div className={styles.yppCards}>
-                  {/* Suscriptores — dato real y confiable */}
+                  {/* Suscriptores */}
                   <div className={`${styles.yppCard} ${subDone ? styles.yppCardDone : ""}`}>
                     <div className={styles.yppCardTop}>
                       <span className={styles.yppCardLabel}>Suscriptores</span>
@@ -989,7 +997,7 @@ export default function Admin() {
                     </div>
                     <div className={styles.yppBigNum} style={{ color: pctColor(subPct) }}>
                       {yppStats.subscribers.toLocaleString("es-AR")}
-                      <span className={styles.yppGoal}> / {yppStats.subscribersGoal.toLocaleString("es-AR")}</span>
+                      <span className={styles.yppGoal}> / 1.000</span>
                     </div>
                     <div className={styles.yppBarTrack}>
                       <div className={styles.yppBarFill} style={{ width: `${subPct}%`, background: pctColor(subPct) }} />
@@ -1000,20 +1008,21 @@ export default function Admin() {
                         ? <span className={styles.yppDoneBadge}>✓ Cumplido</span>
                         : <span className={styles.yppMissing}>Faltan {(yppStats.subscribersGoal - yppStats.subscribers).toLocaleString("es-AR")}</span>}
                     </div>
+                    <p className={styles.yppEstNote}>Requisito base — ambos caminos</p>
                   </div>
 
-                  {/* Horas — real si hay OAuth, estimación si no */}
+                  {/* Camino A — Horas de videos */}
                   <div className={`${styles.yppCard} ${hoursDone ? styles.yppCardDone : ""}`}>
                     <div className={styles.yppCardTop}>
-                      <span className={styles.yppCardLabel}>Horas de reproducción (últimos 12 meses)</span>
+                      <span className={styles.yppCardLabel}>Camino A — Horas de videos</span>
                       {yppStats.watchHoursApiAvailable
                         ? <span className={styles.yppDataBadge}>Dato real ✓</span>
-                        : <span className={styles.yppEstBadge}>Solo en YouTube Studio</span>}
+                        : <span className={styles.yppEstBadge}>Sin datos</span>}
                     </div>
-                    {yppStats.watchHoursApiAvailable && yppStats.watchHours != null ? (
+                    {yppStats.watchHoursApiAvailable && yppStats.watchHoursLongForm != null ? (
                       <>
                         <div className={styles.yppBigNum} style={{ color: pctColor(hoursPct) }}>
-                          {yppStats.watchHours.toLocaleString("es-AR")}
+                          {yppStats.watchHoursLongForm.toLocaleString("es-AR")}
                           <span className={styles.yppGoal}> / 4.000h</span>
                         </div>
                         <div className={styles.yppBarTrack}>
@@ -1023,57 +1032,45 @@ export default function Admin() {
                           <span style={{ color: pctColor(hoursPct), fontWeight: 600 }}>{hoursPct}%</span>
                           {hoursDone
                             ? <span className={styles.yppDoneBadge}>✓ Cumplido</span>
-                            : <span className={styles.yppMissing}>Faltan {(yppStats.watchHoursGoal - yppStats.watchHours).toLocaleString("es-AR")}h</span>}
+                            : <span className={styles.yppMissing}>Faltan {(yppStats.watchHoursGoal - yppStats.watchHoursLongForm).toLocaleString("es-AR")}h</span>}
                         </div>
-                        <p className={styles.yppEstNote} style={{ marginTop: 8 }}>
-                          Dato de YouTube Analytics API · lag ~3 días
-                        </p>
+                        <p className={styles.yppEstNote}>Solo videos largos (sin Shorts/lives) · últimos 12 meses · lag ~3 días</p>
                       </>
                     ) : (
+                      <div className={styles.yppBigNum} style={{ color: "var(--muted)", fontSize: "28px" }}>? <span className={styles.yppGoal}>/ 4.000h</span></div>
+                    )}
+                  </div>
+
+                  {/* Camino B — Vistas de Shorts */}
+                  <div className={`${styles.yppCard} ${shortsDone ? styles.yppCardDone : ""}`}>
+                    <div className={styles.yppCardTop}>
+                      <span className={styles.yppCardLabel}>Camino B — Vistas de Shorts</span>
+                      {yppStats.watchHoursApiAvailable
+                        ? <span className={styles.yppDataBadge}>Dato real ✓</span>
+                        : <span className={styles.yppEstBadge}>Sin datos</span>}
+                    </div>
+                    {yppStats.watchHoursApiAvailable && yppStats.shortsViews90d != null ? (
                       <>
-                        <div className={styles.yppBigNum} style={{ color: "var(--muted)", fontSize: "28px" }}>
-                          ?
-                          <span className={styles.yppGoal}> / 4.000h</span>
+                        <div className={styles.yppBigNum} style={{ color: pctColor(shortsPct) }}>
+                          {yppStats.shortsViews90d.toLocaleString("es-AR")}
+                          <span className={styles.yppGoal}> / 10.000.000</span>
                         </div>
                         <div className={styles.yppBarTrack}>
-                          <div className={styles.yppBarFill} style={{ width: "0%", background: "var(--muted)" }} />
+                          <div className={styles.yppBarFill} style={{ width: `${shortsPct}%`, background: pctColor(shortsPct) }} />
                         </div>
-                        <p className={styles.yppEstNote}>
-                          Revisalas en{" "}
-                          <a href="https://studio.youtube.com/channel/UCpeHi4TE6VuDNSmV9AnOwSg/analytics/tab-overview/period-default" target="_blank" rel="noopener noreferrer" className={styles.link}>YouTube Studio → Análisis</a>.
-                        </p>
+                        <div className={styles.yppBarMeta}>
+                          <span style={{ color: pctColor(shortsPct), fontWeight: 600 }}>{shortsPct}%</span>
+                          {shortsDone
+                            ? <span className={styles.yppDoneBadge}>✓ Cumplido</span>
+                            : <span className={styles.yppMissing}>Faltan {(yppStats.shortsViewsGoal - yppStats.shortsViews90d).toLocaleString("es-AR")}</span>}
+                        </div>
+                        <p className={styles.yppEstNote}>Solo Shorts Feed · últimos 90 días · lag ~3 días</p>
                       </>
+                    ) : (
+                      <div className={styles.yppBigNum} style={{ color: "var(--muted)", fontSize: "28px" }}>? <span className={styles.yppGoal}>/ 10M</span></div>
                     )}
                   </div>
                 </div>
-
-                {/* Referencia de estimación — solo si no hay datos reales */}
-                {!yppStats.watchHoursApiAvailable && (
-                <div className={styles.yppEstBlock}>
-                  <p className={styles.yppEstBlockTitle}>Estimación orientativa (views × duración — NO es el dato real)</p>
-                  <div className={styles.yppChannelRow}>
-                    <div className={styles.yppStatPill}>
-                      <span className={styles.yppStatVal}>{yppStats.subscribers.toLocaleString("es-AR")}</span>
-                      <span className={styles.yppStatLbl}>Suscriptores</span>
-                    </div>
-                    <div className={styles.yppStatPill}>
-                      <span className={styles.yppStatVal}>{yppStats.totalViews.toLocaleString("es-AR")}</span>
-                      <span className={styles.yppStatLbl}>Views totales (canal)</span>
-                    </div>
-                    <div className={styles.yppStatPill}>
-                      <span className={styles.yppStatVal} style={{ color: "#fbbf24" }}>≤ {withinYearUpperBound.toLocaleString("es-AR")}h</span>
-                      <span className={styles.yppStatLbl}>Cota máx. — videos ≤ 12 meses</span>
-                    </div>
-                    <div className={styles.yppStatPill}>
-                      <span className={styles.yppStatVal} style={{ color: "var(--muted)" }}>≤ {totalUpperBound.toLocaleString("es-AR")}h</span>
-                      <span className={styles.yppStatLbl}>Cota máx. — todos los videos</span>
-                    </div>
-                  </div>
-                  <p className={styles.yppEstFootnote}>
-                    "Cota máxima" = views × duración completa. La realidad siempre es menor porque nadie ve el 100% de cada video, y los videos con más de 12 meses contribuyen solo con sus views recientes (no sabemos cuántos son). Usalo solo como referencia de orden de magnitud.
-                  </p>
-                </div>
-                )}
 
                 {/* Desglose por video */}
                 <div className={styles.tableWrap}>

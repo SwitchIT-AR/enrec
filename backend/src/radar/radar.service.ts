@@ -125,8 +125,9 @@ export class RadarService {
         };
       });
 
-      // Intentar horas reales via YouTube Analytics API (OAuth 2.0)
-      let watchHours: number | null = null;
+      // Horas reales via YouTube Analytics API (OAuth 2.0)
+      let watchHoursLongForm: number | null = null;
+      let shortsViews90d: number | null = null;
       let watchHoursApiAvailable = false;
 
       const clientId     = this.config.get<string>('GOOGLE_CLIENT_ID');
@@ -140,25 +141,45 @@ export class RadarService {
 
           const youtubeAnalytics = google.youtubeAnalytics({ version: 'v2', auth: oauth2Client });
 
-          // Analytics API tiene ~3 días de lag; la ventana rolling es exactamente 365 días
+          // Analytics tiene ~3 días de lag
           const endDate = new Date();
           endDate.setDate(endDate.getDate() - 3);
-          const startDate = new Date(endDate);
-          startDate.setFullYear(startDate.getFullYear() - 1);
 
-          const analyticsRes = await youtubeAnalytics.reports.query({
-            ids: 'channel==MINE',
-            startDate: startDate.toISOString().split('T')[0],
-            endDate: endDate.toISOString().split('T')[0],
-            metrics: 'estimatedMinutesWatched',
-          });
+          // Camino A: horas de videos largos — ventana rolling 365 días
+          const startDate365 = new Date(endDate);
+          startDate365.setFullYear(startDate365.getFullYear() - 1);
 
-          this.logger.log(`Analytics raw: ${JSON.stringify(analyticsRes.data)}`);
-          const minutes = analyticsRes.data.rows?.[0]?.[0] as number ?? 0;
-          watchHours = Math.round(minutes / 60);
+          // Camino B: vistas de Shorts — ventana 90 días
+          const startDate90 = new Date(endDate);
+          startDate90.setDate(startDate90.getDate() - 90);
+
+          const endStr   = endDate.toISOString().split('T')[0];
+          const start365 = startDate365.toISOString().split('T')[0];
+          const start90  = startDate90.toISOString().split('T')[0];
+
+          const [longFormRes, shortsRes] = await Promise.all([
+            youtubeAnalytics.reports.query({
+              ids: 'channel==MINE',
+              startDate: start365,
+              endDate: endStr,
+              metrics: 'estimatedMinutesWatched',
+              filters: 'creatorContentType==VIDEO_ON_DEMAND',
+            }),
+            youtubeAnalytics.reports.query({
+              ids: 'channel==MINE',
+              startDate: start90,
+              endDate: endStr,
+              metrics: 'views',
+              filters: 'creatorContentType==SHORTS',
+            }),
+          ]);
+
+          const longFormMinutes = longFormRes.data.rows?.[0]?.[0] as number ?? 0;
+          watchHoursLongForm = Math.round(longFormMinutes / 60);
+          shortsViews90d = shortsRes.data.rows?.[0]?.[0] as number ?? 0;
           watchHoursApiAvailable = true;
         } catch (oauthErr) {
-          this.logger.warn('YouTube Analytics OAuth failed, falling back to estimations', (oauthErr as Error).message);
+          this.logger.warn('YouTube Analytics OAuth failed', (oauthErr as Error).message);
         }
       }
 
@@ -167,8 +188,10 @@ export class RadarService {
         subscribersGoal: 1000,
         totalViews,
         videoCount,
+        watchHoursLongForm,
         watchHoursGoal: 4000,
-        watchHours,
+        shortsViews90d,
+        shortsViewsGoal: 10_000_000,
         watchHoursApiAvailable,
         videoDetails,
       };
