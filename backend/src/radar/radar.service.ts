@@ -157,26 +157,31 @@ export class RadarService {
           const start365 = startDate365.toISOString().split('T')[0];
           const start90  = startDate90.toISOString().split('T')[0];
 
+          // creatorContentType solo funciona como dimensión, no como filtro
+          // → dos queries con dimension=creatorContentType, luego se filtran las filas
           const [longFormRes, shortsRes] = await Promise.all([
             youtubeAnalytics.reports.query({
               ids: 'channel==MINE',
               startDate: start365,
               endDate: endStr,
               metrics: 'estimatedMinutesWatched',
-              filters: 'creatorContentType==VIDEO_ON_DEMAND',
+              dimensions: 'creatorContentType',
             }),
             youtubeAnalytics.reports.query({
               ids: 'channel==MINE',
               startDate: start90,
               endDate: endStr,
               metrics: 'views',
-              filters: 'creatorContentType==SHORTS',
+              dimensions: 'creatorContentType',
             }),
           ]);
 
-          const longFormMinutes = longFormRes.data.rows?.[0]?.[0] as number ?? 0;
+          const findRow = (rows: unknown[][], type: string) =>
+            (rows ?? []).find((r) => r[0] === type)?.[1] as number ?? 0;
+
+          const longFormMinutes = findRow(longFormRes.data.rows as unknown[][], 'VIDEO_ON_DEMAND');
           watchHoursLongForm = Math.round(longFormMinutes / 60);
-          shortsViews90d = shortsRes.data.rows?.[0]?.[0] as number ?? 0;
+          shortsViews90d = findRow(shortsRes.data.rows as unknown[][], 'SHORTS');
           watchHoursApiAvailable = true;
         } catch (oauthErr) {
           this.logger.warn('YouTube Analytics OAuth failed', (oauthErr as Error).message);
