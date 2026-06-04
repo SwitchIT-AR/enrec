@@ -176,6 +176,8 @@ export class RadarService {
             }),
           ]);
 
+          this.logger.log(`LF rows: ${JSON.stringify(longFormRes.data.rows)}`);
+          this.logger.log(`Shorts rows: ${JSON.stringify(shortsRes.data.rows)}`);
           const findRow = (rows: unknown[][], type: string) =>
             (rows ?? []).find((r) => r[0] === type)?.[1] as number ?? 0;
 
