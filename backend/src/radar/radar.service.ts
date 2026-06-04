@@ -176,14 +176,12 @@ export class RadarService {
             }),
           ]);
 
-          this.logger.log(`LF rows: ${JSON.stringify(longFormRes.data.rows)}`);
-          this.logger.log(`Shorts rows: ${JSON.stringify(shortsRes.data.rows)}`);
           const findRow = (rows: unknown[][], type: string) =>
             (rows ?? []).find((r) => r[0] === type)?.[1] as number ?? 0;
 
-          const longFormMinutes = findRow(longFormRes.data.rows as unknown[][], 'VIDEO_ON_DEMAND');
+          const longFormMinutes = findRow(longFormRes.data.rows as unknown[][], 'videoOnDemand');
           watchHoursLongForm = Math.round(longFormMinutes / 60);
-          shortsViews90d = findRow(shortsRes.data.rows as unknown[][], 'SHORTS');
+          shortsViews90d = findRow(shortsRes.data.rows as unknown[][], 'shorts');
           watchHoursApiAvailable = true;
         } catch (oauthErr) {
           this.logger.warn('YouTube Analytics OAuth failed', (oauthErr as Error).message);
