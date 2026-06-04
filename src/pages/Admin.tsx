@@ -102,6 +102,7 @@ type YppStats = {
   totalViews: number;
   videoCount: number;
   watchHoursGoal: number;
+  watchHours: number | null;
   watchHoursApiAvailable: boolean;
   videoDetails: YppVideoDetail[];
   error?: string;
@@ -953,6 +954,12 @@ export default function Admin() {
               .filter(v => v.isWithinYear)
               .reduce((a, v) => a + v.estimatedHoursUpperBound, 0);
 
+            const hoursPct  = yppStats.watchHoursApiAvailable && yppStats.watchHours != null
+              ? Math.min(100, Math.round((yppStats.watchHours / yppStats.watchHoursGoal) * 100))
+              : 0;
+            const hoursDone = yppStats.watchHoursApiAvailable && yppStats.watchHours != null
+              && yppStats.watchHours >= yppStats.watchHoursGoal;
+
             return (
               <>
                 <div className={styles.yppHeader}>
@@ -963,12 +970,14 @@ export default function Admin() {
                   </p>
                 </div>
 
-                {/* Aviso sobre limitación de la API */}
-                <div className={styles.yppApiWarning}>
-                  <strong>⚠ Las horas de reproducción reales no están disponibles vía API.</strong>
-                  <span> YouTube solo las expone en YouTube Analytics (requiere OAuth). Lo que mostrás acá son estimaciones de referencia basadas en views × duración. Para el dato real, entrá a </span>
-                  <a href="https://studio.youtube.com" target="_blank" rel="noopener noreferrer" className={styles.link}>YouTube Studio → Análisis → Ganancias</a>.
-                </div>
+                {/* Aviso cuando no hay OAuth configurado */}
+                {!yppStats.watchHoursApiAvailable && (
+                  <div className={styles.yppApiWarning}>
+                    <strong>⚠ Las horas de reproducción reales no están disponibles.</strong>
+                    <span> Configurá las variables OAuth en el servidor para obtenerlas automáticamente. Para el dato ahora, entrá a </span>
+                    <a href="https://studio.youtube.com" target="_blank" rel="noopener noreferrer" className={styles.link}>YouTube Studio → Análisis → Ganancias</a>.
+                  </div>
+                )}
 
                 {/* Tarjetas de progreso */}
                 <div className={styles.yppCards}>
@@ -993,27 +1002,53 @@ export default function Admin() {
                     </div>
                   </div>
 
-                  {/* Horas — solo referencia, no confiable */}
-                  <div className={styles.yppCard}>
+                  {/* Horas — real si hay OAuth, estimación si no */}
+                  <div className={`${styles.yppCard} ${hoursDone ? styles.yppCardDone : ""}`}>
                     <div className={styles.yppCardTop}>
                       <span className={styles.yppCardLabel}>Horas de reproducción (últimos 12 meses)</span>
-                      <span className={styles.yppEstBadge}>Solo en YouTube Studio</span>
+                      {yppStats.watchHoursApiAvailable
+                        ? <span className={styles.yppDataBadge}>Dato real ✓</span>
+                        : <span className={styles.yppEstBadge}>Solo en YouTube Studio</span>}
                     </div>
-                    <div className={styles.yppBigNum} style={{ color: "var(--muted)", fontSize: "28px" }}>
-                      ?
-                      <span className={styles.yppGoal}> / 4.000h</span>
-                    </div>
-                    <div className={styles.yppBarTrack}>
-                      <div className={styles.yppBarFill} style={{ width: "0%", background: "var(--muted)" }} />
-                    </div>
-                    <p className={styles.yppEstNote}>
-                      La API v3 no expone horas de reproducción. Revisalas directamente en{" "}
-                      <a href="https://studio.youtube.com/channel/UCpeHi4TE6VuDNSmV9AnOwSg/analytics/tab-overview/period-default" target="_blank" rel="noopener noreferrer" className={styles.link}>YouTube Studio → Análisis</a>.
-                    </p>
+                    {yppStats.watchHoursApiAvailable && yppStats.watchHours != null ? (
+                      <>
+                        <div className={styles.yppBigNum} style={{ color: pctColor(hoursPct) }}>
+                          {yppStats.watchHours.toLocaleString("es-AR")}
+                          <span className={styles.yppGoal}> / 4.000h</span>
+                        </div>
+                        <div className={styles.yppBarTrack}>
+                          <div className={styles.yppBarFill} style={{ width: `${hoursPct}%`, background: pctColor(hoursPct) }} />
+                        </div>
+                        <div className={styles.yppBarMeta}>
+                          <span style={{ color: pctColor(hoursPct), fontWeight: 600 }}>{hoursPct}%</span>
+                          {hoursDone
+                            ? <span className={styles.yppDoneBadge}>✓ Cumplido</span>
+                            : <span className={styles.yppMissing}>Faltan {(yppStats.watchHoursGoal - yppStats.watchHours).toLocaleString("es-AR")}h</span>}
+                        </div>
+                        <p className={styles.yppEstNote} style={{ marginTop: 8 }}>
+                          Dato de YouTube Analytics API · lag ~3 días
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <div className={styles.yppBigNum} style={{ color: "var(--muted)", fontSize: "28px" }}>
+                          ?
+                          <span className={styles.yppGoal}> / 4.000h</span>
+                        </div>
+                        <div className={styles.yppBarTrack}>
+                          <div className={styles.yppBarFill} style={{ width: "0%", background: "var(--muted)" }} />
+                        </div>
+                        <p className={styles.yppEstNote}>
+                          Revisalas en{" "}
+                          <a href="https://studio.youtube.com/channel/UCpeHi4TE6VuDNSmV9AnOwSg/analytics/tab-overview/period-default" target="_blank" rel="noopener noreferrer" className={styles.link}>YouTube Studio → Análisis</a>.
+                        </p>
+                      </>
+                    )}
                   </div>
                 </div>
 
-                {/* Referencia de estimación */}
+                {/* Referencia de estimación — solo si no hay datos reales */}
+                {!yppStats.watchHoursApiAvailable && (
                 <div className={styles.yppEstBlock}>
                   <p className={styles.yppEstBlockTitle}>Estimación orientativa (views × duración — NO es el dato real)</p>
                   <div className={styles.yppChannelRow}>
@@ -1038,6 +1073,7 @@ export default function Admin() {
                     "Cota máxima" = views × duración completa. La realidad siempre es menor porque nadie ve el 100% de cada video, y los videos con más de 12 meses contribuyen solo con sus views recientes (no sabemos cuántos son). Usalo solo como referencia de orden de magnitud.
                   </p>
                 </div>
+                )}
 
                 {/* Desglose por video */}
                 <div className={styles.tableWrap}>

@@ -1,4 +1,5 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { google } from 'googleapis';
 import { YoutubeBaseline } from './youtube-baseline.entity';
 
 const SESSIONS = [
@@ -118,13 +119,47 @@ export class RadarService {
           videoId: session.videoId,
           views,
           durationMin: Math.round(durationH * 60),
-          // Estimación máxima (views × duración): sobreestima porque asume
-          // retention 100% y no filtra por período de 12 meses.
           estimatedHoursUpperBound: Math.round(views * durationH),
           publishedAt,
           isWithinYear,
         };
       });
+
+      // Intentar horas reales via YouTube Analytics API (OAuth 2.0)
+      let watchHours: number | null = null;
+      let watchHoursApiAvailable = false;
+
+      const clientId     = this.config.get<string>('GOOGLE_CLIENT_ID');
+      const clientSecret = this.config.get<string>('GOOGLE_CLIENT_SECRET');
+      const refreshToken = this.config.get<string>('GOOGLE_REFRESH_TOKEN');
+
+      if (clientId && clientSecret && refreshToken) {
+        try {
+          const oauth2Client = new google.auth.OAuth2(clientId, clientSecret);
+          oauth2Client.setCredentials({ refresh_token: refreshToken });
+
+          const youtubeAnalytics = google.youtubeAnalytics({ version: 'v2', auth: oauth2Client });
+
+          // Analytics API tiene ~3 días de lag; la ventana rolling es exactamente 365 días
+          const endDate = new Date();
+          endDate.setDate(endDate.getDate() - 3);
+          const startDate = new Date(endDate);
+          startDate.setFullYear(startDate.getFullYear() - 1);
+
+          const analyticsRes = await youtubeAnalytics.reports.query({
+            ids: 'channel==MINE',
+            startDate: startDate.toISOString().split('T')[0],
+            endDate: endDate.toISOString().split('T')[0],
+            metrics: 'estimatedMinutesWatched',
+          });
+
+          const minutes = analyticsRes.data.rows?.[0]?.[0] as number ?? 0;
+          watchHours = Math.round(minutes / 60);
+          watchHoursApiAvailable = true;
+        } catch (oauthErr) {
+          this.logger.warn('YouTube Analytics OAuth failed, falling back to estimations', (oauthErr as Error).message);
+        }
+      }
 
       return {
         subscribers,
@@ -132,10 +167,9 @@ export class RadarService {
         totalViews,
         videoCount,
         watchHoursGoal: 4000,
+        watchHours,
+        watchHoursApiAvailable,
         videoDetails,
-        // Nota: las horas reales (rolling 12 meses) solo están en YouTube Analytics API
-        // con OAuth 2.0. Esta API (key) no las expone.
-        watchHoursApiAvailable: false,
       };
     } catch (e) {
       this.logger.error('YPP stats failed', e);
