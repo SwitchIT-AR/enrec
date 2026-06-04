@@ -153,6 +153,7 @@ export class RadarService {
             metrics: 'estimatedMinutesWatched',
           });
 
+          this.logger.log(`Analytics raw: ${JSON.stringify(analyticsRes.data)}`);
           const minutes = analyticsRes.data.rows?.[0]?.[0] as number ?? 0;
           watchHours = Math.round(minutes / 60);
           watchHoursApiAvailable = true;
