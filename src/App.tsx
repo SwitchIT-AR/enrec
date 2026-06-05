@@ -5,6 +5,7 @@ import Home from "./pages/Home";
 import Radar from "./pages/Radar";
 import RadarSuccess from "./pages/RadarSuccess";
 import Admin from "./pages/Admin";
+import Random from "./pages/Random";
 import { gtmPush } from "./gtm";
 
 function getSessionId(): string {
@@ -35,15 +36,18 @@ export default function App() {
     }).catch(() => {});
   }, [location.pathname]);
 
+  const isRandom = location.pathname === "/random";
+
   return (
     <>
-      <Header />
+      {!isRandom && <Header />}
       <main>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/radar" element={<Radar />} />
           <Route path="/radar/gracias" element={<RadarSuccess />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/random" element={<Random />} />
         </Routes>
       </main>
     </>

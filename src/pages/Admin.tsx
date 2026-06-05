@@ -435,6 +435,10 @@ export default function Admin() {
               <span className={styles.statNum}>{ga4 ? (ga4.pages["/radar"] ?? 0) : "—"}</span>
               <span className={styles.statLabel}>🔴 En /radar ahora</span>
             </div>
+            <div className={styles.statCard}>
+              <span className={styles.statNum}>{ga4 ? (ga4.pages["/random"] ?? 0) : "—"}</span>
+              <span className={styles.statLabel}>🔴 En /random ahora</span>
+            </div>
           </div>
         );
       })()}
