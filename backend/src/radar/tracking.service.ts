@@ -21,12 +21,18 @@ export class TrackingService {
 
   record(path: string, sid: string) {
     const now = Date.now();
-    const existing = this.hits.find((h) => h.sid === sid && h.path === path);
-    if (existing) {
-      existing.ts = now;
-    } else {
+    // /random: cada carga es un video nuevo, siempre registrar en DB sin deduplicar
+    if (path === '/random') {
       this.hits.push({ path, sid, ts: now });
       this.logRepo.save(this.logRepo.create({ sid, path })).catch(() => {});
+    } else {
+      const existing = this.hits.find((h) => h.sid === sid && h.path === path);
+      if (existing) {
+        existing.ts = now;
+      } else {
+        this.hits.push({ path, sid, ts: now });
+        this.logRepo.save(this.logRepo.create({ sid, path })).catch(() => {});
+      }
     }
     const cutoff = now - 2 * 60 * 60 * 1000;
     for (let i = this.hits.length - 1; i >= 0; i--) {
