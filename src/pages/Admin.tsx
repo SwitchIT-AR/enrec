@@ -151,7 +151,7 @@ export default function Admin() {
   const [ytStats, setYtStats] = useState<Youtubestat[] | null>(null);
   const [ytLoading, setYtLoading] = useState(false);
   const [ga4, setGa4] = useState<{ total: number; pages: Record<string, number> } | null>(null);
-  const [visitStats, setVisitStats] = useState<{ uniqueVisitors: number; totalPageViews: number } | null>(null);
+  const [visitStats, setVisitStats] = useState<{ uniqueVisitors: number; totalPageViews: number; pageViewsByPath: Record<string, number> } | null>(null);
   const [baselineDate, setBaselineDate] = useState<string | null>(null);
   const [capturingBaseline, setCapturingBaseline] = useState(false);
   const [yppStats, setYppStats] = useState<YppStats | null>(null);
@@ -438,6 +438,10 @@ export default function Admin() {
             <div className={styles.statCard}>
               <span className={styles.statNum}>{ga4 ? (ga4.pages["/random"] ?? 0) : "—"}</span>
               <span className={styles.statLabel}>🔴 En /random ahora</span>
+            </div>
+            <div className={styles.statCard}>
+              <span className={styles.statNum}>{visitStats ? (visitStats.pageViewsByPath["/random"] ?? 0).toLocaleString("es-AR") : "—"}</span>
+              <span className={styles.statLabel}>Total videos /random</span>
             </div>
           </div>
         );

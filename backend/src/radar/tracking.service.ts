@@ -45,17 +45,28 @@ export class TrackingService {
     return { total: uniqueSessions, pages };
   }
 
-  async getTotalStats(): Promise<{ uniqueVisitors: number; totalPageViews: number }> {
-    const [uniqueResult, totalPageViews] = await Promise.all([
+  async getTotalStats(): Promise<{ uniqueVisitors: number; totalPageViews: number; pageViewsByPath: Record<string, number> }> {
+    const [uniqueResult, totalPageViews, byPath] = await Promise.all([
       this.logRepo
         .createQueryBuilder('l')
         .select('COUNT(DISTINCT l.sid)', 'count')
         .getRawOne<{ count: string }>(),
       this.logRepo.count(),
+      this.logRepo
+        .createQueryBuilder('l')
+        .select('l.path', 'path')
+        .addSelect('COUNT(*)', 'count')
+        .groupBy('l.path')
+        .getRawMany<{ path: string; count: string }>(),
     ]);
+    const pageViewsByPath: Record<string, number> = {};
+    for (const row of byPath) {
+      pageViewsByPath[row.path] = parseInt(row.count, 10);
+    }
     return {
       uniqueVisitors: parseInt(uniqueResult?.count ?? '0', 10),
       totalPageViews,
+      pageViewsByPath,
     };
   }
 }
