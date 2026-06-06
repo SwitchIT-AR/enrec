@@ -6,6 +6,7 @@ import Radar from "./pages/Radar";
 import RadarSuccess from "./pages/RadarSuccess";
 import Admin from "./pages/Admin";
 import Random from "./pages/Random";
+import Playlist from "./pages/Playlist";
 import { gtmPush } from "./gtm";
 
 function getSessionId(): string {
@@ -36,7 +37,7 @@ export default function App() {
     }).catch(() => {});
   }, [location.pathname]);
 
-  const isRandom = location.pathname === "/random";
+  const isRandom = location.pathname === "/random" || location.pathname === "/playlist";
 
   return (
     <>
@@ -48,6 +49,7 @@ export default function App() {
           <Route path="/radar/gracias" element={<RadarSuccess />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/random" element={<Random />} />
+          <Route path="/playlist" element={<Playlist />} />
         </Routes>
       </main>
     </>
