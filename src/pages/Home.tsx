@@ -5,24 +5,32 @@ import styles from "./Home.module.css";
 
 import logo from "../assets/logo-enrec.png";
 
-const FEATURED = [
-  { ytId: "3u0bbataius", artist: "Manu Martínez", label: "Última sesión" },
-  { ytId: "__KGJ4_HmgY", artist: "Mariana Michi", label: "Sesión #8" },
+// Ordenadas de la más nueva a la más vieja. Para sumar una sesión, agregarla arriba:
+// el hero toma automáticamente las primeras 4 y el badge "Nuevo" las primeras 2.
+const ALL_SESSIONS = [
+  { nombre: "La Valenti", videoId: "TjNZv7YNS8o", label: "Live Session #10" },
+  { nombre: "PEMA", videoId: "3wlzbpi8Jqc", label: "Micro Session #3" },
+  { nombre: "Manu Martínez", videoId: "3u0bbataius", label: "Live Session #9" },
+  { nombre: "Mariana Michi", videoId: "__KGJ4_HmgY", label: "Sesión #8" },
+  { nombre: "Fepo", videoId: "zNRcYUV6ZdE", label: "Micro Session #2" },
+  { nombre: "Coval", videoId: "3CRVIZJU8F8", label: "Micro Session #1" },
+  { nombre: "Francisca y Los Exploradores", videoId: "4GrL1ccJ3mo", label: "Sesión #7" },
+  { nombre: "Luaso", videoId: "yEq3rOBf0SM", label: "Sesión #6" },
+  { nombre: "Martu Brito", videoId: "BZivQ-XM7tI", label: "Sesión #5" },
+  { nombre: "Motel Montpellier", videoId: "nTQM4gD68Yo", label: "Sesión #4" },
+  { nombre: "JJJulian", videoId: "jngaRABfN50", label: "Sesión #3" },
+  { nombre: "Mina Baxx", videoId: "kLsmlObEMUk", label: "Sesión #2" },
+  { nombre: "Los Palmos", videoId: "qXqajLd4YHI", label: "Sesión #1" },
 ];
 
-const ALL_SESSIONS = [
-  { nombre: "Manu Martínez", videoId: "3u0bbataius" },
-  { nombre: "Mariana Michi", videoId: "__KGJ4_HmgY" },
-  { nombre: "Fepo", videoId: "zNRcYUV6ZdE" },
-  { nombre: "Coval", videoId: "3CRVIZJU8F8" },
-  { nombre: "Francisca y Los Exploradores", videoId: "4GrL1ccJ3mo" },
-  { nombre: "Luaso", videoId: "yEq3rOBf0SM" },
-  { nombre: "Martu Brito", videoId: "BZivQ-XM7tI" },
-  { nombre: "Motel Montpellier", videoId: "nTQM4gD68Yo" },
-  { nombre: "JJJulian", videoId: "jngaRABfN50" },
-  { nombre: "Mina Baxx", videoId: "kLsmlObEMUk" },
-  { nombre: "Los Palmos", videoId: "qXqajLd4YHI" },
-];
+const NUEVAS = 2; // cuántas se marcan con el badge "Nuevo" en la grilla
+
+// El hero rota siempre las últimas 4 sesiones publicadas.
+const FEATURED = ALL_SESSIONS.slice(0, 4).map((s, i) => ({
+  ytId: s.videoId,
+  artist: s.nombre,
+  label: i === 0 ? "Última sesión" : s.label,
+}));
 
 const socials = [
   { label: "YouTube", href: "https://www.youtube.com/@En.REC-" },
@@ -129,7 +137,7 @@ export default function Home() {
         {/* CTAs abajo */}
         <div className={styles.heroCtas}>
           <Link to="/radar" className={styles.ctaPrimary}>
-            Postulate para grabar
+            Radar EN .REC
           </Link>
           <a href="#sesiones" className={styles.ctaSecondary}>
             Ver todas las sesiones
@@ -143,7 +151,7 @@ export default function Home() {
           <h2 className={styles.sectionTitle}>Sesiones</h2>
         </div>
         <div className={styles.ytGrid}>
-          {ALL_SESSIONS.map((s) => (
+          {ALL_SESSIONS.map((s, i) => (
             <button
               key={s.videoId}
               className={styles.ytCard}
@@ -155,6 +163,7 @@ export default function Home() {
                   alt={s.nombre}
                   className={styles.ytThumbImg}
                 />
+                {i < NUEVAS && <span className={styles.ytBadge}>Nuevo</span>}
                 <div className={styles.ytPlayOverlay}>
                   <svg width="44" height="44" viewBox="0 0 24 24" fill="white">
                     <path d="M8 5v14l11-7z" />
@@ -224,14 +233,14 @@ export default function Home() {
         <div className={styles.radarCtaInner}>
           <span className={styles.radarDot} />
           <div>
-            <h2 className={styles.radarCtaTitle}>¿Tenés un proyecto musical?</h2>
+            <h2 className={styles.radarCtaTitle}>Radar EN .REC</h2>
             <p className={styles.radarCtaText}>
-              Estamos buscando artistas y bandas para grabar una nueva sesión en vivo.
-              Las inscripciones están abiertas hasta el <strong>31 de Julio de 2026</strong>.
+              Las inscripciones de esta edición ya cerraron. Estamos escuchando todos los proyectos
+              que llegaron y anunciamos los seleccionados en los próximos días por nuestras redes.
             </p>
           </div>
           <Link to="/radar" className={styles.radarCtaBtn}>
-            Postulate ahora
+            Ver la convocatoria
           </Link>
         </div>
       </section>

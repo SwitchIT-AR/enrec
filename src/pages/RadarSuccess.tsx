@@ -18,7 +18,8 @@ export default function RadarSuccess() {
           finalistas, te contactaremos al email que dejaste.
         </p>
         <p className={styles.successSub}>
-          Recordá que el cierre de inscripciones es el <strong>31 de Julio de 2026</strong>.
+          Ya cerramos las inscripciones. En los próximos días anunciamos los seleccionados por
+          nuestras redes.
         </p>
       </div>
     </div>

@@ -1,9 +1,13 @@
 import { useState, useEffect } from "react";
 import type { FormEvent, ChangeEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import styles from "./Radar.module.css";
 
 const API_URL = "/api/radar";
+
+// Convocatoria 2026 cerrada el 31/07/2026. Poner en false para reabrir el formulario
+// en la próxima edición (acordarse de actualizar también la fecha en TYC_TEXT y en Home).
+const INSCRIPCIONES_CERRADAS = true;
 
 type ActiveSet = {
   id: number;
@@ -269,6 +273,47 @@ export default function Radar() {
       setStatus("error");
     }
   };
+
+  if (INSCRIPCIONES_CERRADAS) {
+    return (
+      <div className={styles.successScreen}>
+        <div className={styles.successCard}>
+          <div className={styles.successDot} />
+          <h1 className={styles.successTitle}>Las inscripciones cerraron</h1>
+          <p className={styles.successText}>
+            Radar EN .REC cerró el 31 de julio. Gracias a cada proyecto que se tomó el tiempo de
+            postularse: recibimos muchísimo material y ahora nos toca a nosotros escucharlo con la
+            atención que merece.
+          </p>
+          <p className={styles.successText}>
+            En los próximos días anunciamos los seleccionados por nuestras redes. Y si esta vez no
+            llegaste a tiempo, va a haber una próxima edición — seguinos para enterarte primero.
+          </p>
+          <div className={styles.closedActions}>
+            <a
+              className={styles.closedBtn}
+              href="https://www.instagram.com/en.rec/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Instagram
+            </a>
+            <a
+              className={styles.closedBtn}
+              href="https://www.youtube.com/@En.REC-"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              YouTube
+            </a>
+            <Link className={styles.closedBtnGhost} to="/">
+              Ver las sesiones
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (status === "outdated") {
     return (

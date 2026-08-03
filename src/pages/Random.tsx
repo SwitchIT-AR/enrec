@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import styles from "./Random.module.css";
 
 const SESSIONS = [
+  { nombre: "La Valenti", videoId: "TjNZv7YNS8o" },
+  { nombre: "PEMA", videoId: "3wlzbpi8Jqc" },
   { nombre: "Manu Martínez", videoId: "3u0bbataius" },
   { nombre: "Mariana Michi", videoId: "__KGJ4_HmgY" },
   { nombre: "Fepo", videoId: "zNRcYUV6ZdE" },
